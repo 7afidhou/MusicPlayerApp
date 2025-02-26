@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -27,10 +28,28 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       isLiked = !isLiked;
     });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          isLiked ? "Added to Liked Songs" : "Removed from Liked Songs",
+          style: const TextStyle(
+              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: isLiked
+            ? Colors.green
+            : Colors.red, // Different colors for like/unlike
+        behavior: SnackBarBehavior.floating, // Floating effect
+        elevation: 6.0, // Shadow effect
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12), // Rounded corners
+        ),
+        duration:
+            const Duration(seconds: 1), // Controls how long it stays visible
+      ),
+    );
   }
 
   void playNext() {}
-
   void playPrevious() {}
 
   @override
@@ -52,32 +71,7 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(height: 40),
                 _progresssection(),
                 const SizedBox(height: 40),
-                Padding(
-                padding:  const EdgeInsets.only(left: 2, right: 2),
-                child:Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween
-                  ,children: [
-                  IconButton(
-                    onPressed: playPrevious,
-                    icon: const Icon(Icons.skip_previous_outlined,
-                        size: 60, color: Colors.white),
-                  ),
-                  IconButton(
-                    onPressed: togglePlayPause,
-                    icon: Icon(
-                      isPlaying ?  Icons.play_circle_filled_rounded :Icons.pause_circle_filled_rounded ,
-                      size: 120,
-                      color: Color(0xff796EF8),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: playNext,
-                    icon: const Icon(Icons.skip_next_outlined,
-                        size: 60, color: Colors.white),
-                  ),
-                ],),
-                ),
-
+                _controlsection(),
 
                 // Music Image
                 // Center(
@@ -150,43 +144,73 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Padding _controlsection() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 10, right: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: playPrevious,
+            icon: const Icon(Icons.skip_previous_outlined,
+                size: 60, color: Colors.white),
+          ),
+          IconButton(
+            onPressed: togglePlayPause,
+            icon: Icon(
+              isPlaying
+                  ? Icons.pause_circle_filled_rounded
+                  : Icons.play_circle_filled_rounded,
+              size: 100,
+              color: Color(0xff796EF8),
+            ),
+          ),
+          IconButton(
+            onPressed: playNext,
+            icon: const Icon(Icons.skip_next_outlined,
+                size: 60, color: Colors.white),
+          ),
+        ],
+      ),
+    );
+  }
+
   Padding _progresssection() {
     return Padding(
-                padding: const EdgeInsets.only(left: 20, right: 20),
-                child: Column(children: [
-                  ClipRRect(
-                    borderRadius:
-                        BorderRadius.circular(10), // Rounded corners
-                    child: const LinearProgressIndicator(
-                      value: 0.5,
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
-                      backgroundColor: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  const Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      "1:30",
-                      style:  TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Nunito',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                    ),
-                    Text(
-                      "3:00",
-                      style:TextStyle(
-                          color: Colors.white,
-                          fontFamily: 'Nunito',
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                    ),
-                  ],
-                ),
-                ]),
-              );
+      padding: const EdgeInsets.only(left: 20, right: 20),
+      child: Column(children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10), // Rounded corners
+          child: const LinearProgressIndicator(
+            value: 0.5,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
+            backgroundColor: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 3),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "1:30",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
+            ),
+            Text(
+              "3:00",
+              style: TextStyle(
+                  color: Colors.white,
+                  fontFamily: 'Nunito',
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16),
+            ),
+          ],
+        ),
+      ]),
+    );
   }
 
   Column _songdatasection() {
