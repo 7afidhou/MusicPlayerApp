@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+//import 'package:fluttertoast/fluttertoast.dart';
+import 'favorite.dart';
+// import 'dart:async';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -8,13 +10,30 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage>
+    with SingleTickerProviderStateMixin {
   bool isPlaying = false;
   bool isLiked = false;
   bool hiddenData = true;
   int clickedTimes = 0;
   String singer = "Marwan Khouri";
   String song = "Akbar Anani";
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 20), // Rotation speed
+    )..repeat(); // Continuously rotates
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose(); // Clean up animation
+    super.dispose();
+  }
 
   void togglePlayPause() {
     setState(() {
@@ -48,7 +67,12 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
+  void goToFavorites() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FavoritePage()),
+    );
+  } 
   void playNext() {}
   void playPrevious() {}
 
@@ -236,57 +260,70 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Container _photosection() {
-    return Container(
-      width: 200, // Square size
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20), // Rounded corners
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3), // Shadow color
-            spreadRadius: 7, // Spread of the shadow
-            blurRadius: 10, // Softness of the shadow
-            offset: const Offset(4, 4), // Position of the shadow
+  AnimatedBuilder _photosection() {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Transform.rotate(
+          angle: _controller.value * 2 * 3.1416, // Rotates 360 degrees
+          child: Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle, // Makes it round
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  spreadRadius: 7,
+                  blurRadius: 10,
+                  offset: const Offset(4, 4),
+                ),
+              ],
+              image: const DecorationImage(
+                image: AssetImage('assets/images/Music.jpg'),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ],
-        image: const DecorationImage(
-          image: AssetImage('assets/images/Music.jpg'),
-          fit: BoxFit.cover, // Ensures the image covers the square
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Padding _appheader() {
-    return Padding(
-        padding: const EdgeInsets.only(left: 12, right: 12),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            IconButton(
-              onPressed: () {},
-              icon: const Icon(
-                Icons.arrow_back,
-                color: Colors.white,
-                size: 30,
-              ),
-            ),
-            Text("$song by $singer",
-                style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.bold)),
-            IconButton(
-              onPressed: toggleLike,
-              icon: Icon(
-                Icons.favorite,
-                color: isLiked ? Colors.red : Colors.white,
-                size: 30,
-              ),
-            ),
-          ],
-        ));
-  }
+Padding _appheader() {
+  return Padding(
+    padding: const EdgeInsets.only(left: 12, right: 12),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        IconButton(
+          onPressed: () {}, // Back button functionality
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+            size: 30,
+          ),
+        ),
+        Text(
+          "$song by $singer",
+          style: const TextStyle(
+            fontSize: 16,
+            color: Colors.white,
+            fontFamily: 'Nunito',
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        GestureDetector(
+          onTap: toggleLike, // Short tap toggles like
+          onLongPress: goToFavorites, // Long press navigates to FavoritePage
+          child: Icon(
+            isLiked ? Icons.favorite : Icons.favorite_border,
+            color: isLiked ? Colors.red : Colors.white,
+            size: 30,
+          ),
+        ),
+      ],
+    ),
+  );
 }
+    }
