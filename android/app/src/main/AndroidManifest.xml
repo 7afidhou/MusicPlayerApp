@@ -14,9 +14,9 @@
             android:windowSoftInputMode="adjustResize">
 
             <!-- 🔥 Set splash screen background -->
-    <meta-data
+    <!-- <meta-data
         android:name="android.windowSplashScreenBackground"
-        android:resource="@drawable/launch_background"/>
+        android:resource="@drawable/launch_background"/> -->
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
