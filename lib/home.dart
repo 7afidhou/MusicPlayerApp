@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 //import 'package:fluttertoast/fluttertoast.dart';
 import 'favorite.dart';
 // import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -10,8 +11,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage>
-    with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   bool isPlaying = false;
   bool isLiked = false;
   bool hiddenData = true;
@@ -19,6 +19,9 @@ class _HomePageState extends State<HomePage>
   String singer = "Marwan Khouri";
   String song = "Akbar Anani";
   late AnimationController _controller;
+  final AudioPlayer _player = AudioPlayer();
+  Duration _duration = Duration.zero; // Total song duration
+  Duration _position = Duration.zero; // Current position in song
 
   @override
   void initState() {
@@ -27,6 +30,33 @@ class _HomePageState extends State<HomePage>
       vsync: this,
       duration: const Duration(seconds: 20), // Rotation speed
     )..repeat(); // Continuously rotates
+
+    _player.onDurationChanged.listen((newDuration) {
+      setState(() {
+        _duration = newDuration;
+      });
+    });
+
+    _player.onDurationChanged.listen((newDuration) {
+      setState(() {
+        _duration = newDuration;
+      });
+    });
+
+    // Listen to audio position
+    _player.onPositionChanged.listen((newPosition) {
+      setState(() {
+        _position = newPosition;
+      });
+    });
+
+    // Handle song completion
+    _player.onPlayerComplete.listen((_) {
+      setState(() {
+        isPlaying = false;
+        _position = Duration.zero;
+      });
+    });
   }
 
   @override
@@ -36,6 +66,11 @@ class _HomePageState extends State<HomePage>
   }
 
   void togglePlayPause() {
+    if (isPlaying) {
+      _player.pause();
+    } else {
+      _player.play(AssetSource('audios/song.mp3'));
+    }
     setState(() {
       isPlaying = !isPlaying;
       clickedTimes++;
@@ -67,15 +102,22 @@ class _HomePageState extends State<HomePage>
       ),
     );
   }
+
   void goToFavorites() {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const FavoritePage()),
     );
-  } 
+  }
+
   void playNext() {}
   void playPrevious() {}
-
+  String formatTime(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,43 +241,50 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Padding _progresssection() {
+   Padding _progresssection() {
+    double progress = _duration.inSeconds > 0
+        ? _position.inSeconds / _duration.inSeconds
+        : 0.0; // Calculate progress
+
     return Padding(
-      padding: const EdgeInsets.only(left: 20, right: 20),
-      child: Column(children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(10), // Rounded corners
-          child: const LinearProgressIndicator(
-            value: 0.5,
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
-            backgroundColor: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress, // Dynamic progress
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
+              backgroundColor: Colors.white,
+            ),
           ),
-        ),
-        const SizedBox(height: 3),
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              "1:30",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
-            ),
-            Text(
-              "3:00",
-              style: TextStyle(
-                  color: Colors.white,
-                  fontFamily: 'Nunito',
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16),
-            ),
-          ],
-        ),
-      ]),
+          const SizedBox(height: 3),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                formatTime(_position), // Current time
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+              Text(
+                formatTime(_duration), // Total duration
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontFamily: 'Nunito',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
+
 
   Column _songdatasection() {
     return Column(
@@ -290,40 +339,40 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-Padding _appheader() {
-  return Padding(
-    padding: const EdgeInsets.only(left: 12, right: 12),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        IconButton(
-          onPressed: () {}, // Back button functionality
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-            size: 30,
+  Padding _appheader() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, right: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            onPressed: () {}, // Back button functionality
+            icon: const Icon(
+              Icons.arrow_back,
+              color: Colors.white,
+              size: 30,
+            ),
           ),
-        ),
-        Text(
-          "$song by $singer",
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.white,
-            fontFamily: 'Nunito',
-            fontWeight: FontWeight.bold,
+          Text(
+            "$song by $singer",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              fontFamily: 'Nunito',
+              fontWeight: FontWeight.bold,
+            ),
           ),
-        ),
-        GestureDetector(
-          onTap: toggleLike, // Short tap toggles like
-          onLongPress: goToFavorites, // Long press navigates to FavoritePage
-          child: Icon(
-            isLiked ? Icons.favorite : Icons.favorite_border,
-            color: isLiked ? Colors.red : Colors.white,
-            size: 30,
+          GestureDetector(
+            onTap: toggleLike, // Short tap toggles like
+            onLongPress: goToFavorites, // Long press navigates to FavoritePage
+            child: Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border,
+              color: isLiked ? Colors.red : Colors.white,
+              size: 30,
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
-    }

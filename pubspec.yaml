@@ -30,7 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
+  audioplayers: ^5.2.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -63,6 +63,7 @@ flutter:
     - assets/images/Music.jpg
     - assets/images/Play.jpg
     - assets/images/Pause.png
+    - assets/audios/song.mp3
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -91,8 +92,8 @@ flutter:
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
 flutter_native_splash:
-  color: "#FF181787"  # لون الخلفية
+  color: "#181787"  # لون الخلفية
   image: assets/images/Music_logo.png  # مسار صورة اللوجو
   android_12:
     image: assets/images/Music_logo.png
-    icon_background_color: "#FF181787"
+    icon_background_color: "#181787"
