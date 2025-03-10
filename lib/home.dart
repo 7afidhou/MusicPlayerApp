@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-//import 'package:fluttertoast/fluttertoast.dart';
 import 'favorite.dart';
 // import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,7 +12,7 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   bool isPlaying = false;
   bool isLiked = false;
   bool hiddenData = true;
@@ -23,13 +24,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Duration _duration = Duration.zero; // Total song duration
   Duration _position = Duration.zero; // Current position in song
 
-  @override
+  
+   @override
   void initState() {
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 20), // Rotation speed
-    )..repeat(); // Continuously rotates
+      duration: const Duration(seconds: 20),
+    )..repeat();
+
+    _loadLastPosition();
 
     _player.onDurationChanged.listen((newDuration) {
       setState(() {
@@ -37,33 +41,52 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       });
     });
 
-    _player.onDurationChanged.listen((newDuration) {
-      setState(() {
-        _duration = newDuration;
-      });
-    });
-
-    // Listen to audio position
     _player.onPositionChanged.listen((newPosition) {
       setState(() {
         _position = newPosition;
       });
     });
 
-    // Handle song completion
     _player.onPlayerComplete.listen((_) {
       setState(() {
         isPlaying = false;
         _position = Duration.zero;
       });
     });
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void dispose() {
-    _controller.dispose(); // Clean up animation
+    WidgetsBinding.instance.removeObserver(this);
+    _controller.dispose();
+    _player.dispose();
     super.dispose();
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused) {
+      _pauseMusic();
+    } else if (state == AppLifecycleState.resumed) {
+      _resumeMusic();
+    }
+  }
+
+  Future<void> _loadLastPosition() async {
+    final prefs = await SharedPreferences.getInstance();
+    int lastPosition = prefs.getInt('last_position') ?? 0;
+    setState(() {
+      _position = Duration(milliseconds: lastPosition);
+    });
+  }
+
+  Future<void> _saveLastPosition() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setInt('last_position', _position.inMilliseconds);
+  }
+
 
   void togglePlayPause() {
     if (isPlaying) {
@@ -78,6 +101,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
+  Future<void> _pauseMusic() async {
+    await _saveLastPosition();
+    await _player.pause();
+  }
+
+  Future<void> _resumeMusic() async {
+    await _player.play(AssetSource('audios/song.mp3'), position: _position);
+  }
   void toggleLike() {
     setState(() {
       isLiked = !isLiked;
@@ -112,12 +143,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   void playNext() {}
   void playPrevious() {}
+
   String formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return "$minutes:$seconds";
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
