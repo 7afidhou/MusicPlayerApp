@@ -1,6 +1,6 @@
-# blankproject
+# Music Player App
 
-A new Flutter project.
+A new Flutter project which is music player.
 
 ## Getting Started
 
