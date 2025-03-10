@@ -104,10 +104,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Future<void> _pauseMusic() async {
     await _saveLastPosition();
     await _player.pause();
+    setState(() {
+      isPlaying = false;
+    });
   }
 
   Future<void> _resumeMusic() async {
     await _player.play(AssetSource('audios/song.mp3'), position: _position);
+        setState(() {
+      isPlaying = true;
+    });
   }
   void toggleLike() {
     setState(() {
