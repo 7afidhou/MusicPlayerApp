@@ -4,7 +4,6 @@ import 'favorite.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -21,11 +20,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   String song = "Akbar Anani";
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
-  Duration _duration = Duration.zero; // Total song duration
-  Duration _position = Duration.zero; // Current position in song
+  Duration _duration = Duration.zero; 
+  Duration _position = Duration.zero;
 
-  
-   @override
+  @override
   void initState() {
     super.initState();
     _controller = AnimationController(
@@ -87,7 +85,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     prefs.setInt('last_position', _position.inMilliseconds);
   }
 
-
   void togglePlayPause() {
     if (isPlaying) {
       _player.pause();
@@ -111,10 +108,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Future<void> _resumeMusic() async {
     await _player.play(AssetSource('audios/song.mp3'), position: _position);
-        setState(() {
+    setState(() {
       isPlaying = true;
     });
   }
+
   void toggleLike() {
     setState(() {
       isLiked = !isLiked;
@@ -280,7 +278,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-   Padding _progresssection() {
+  Padding _progresssection() {
     double progress = _duration.inSeconds > 0
         ? _position.inSeconds / _duration.inSeconds
         : 0.0; // Calculate progress
@@ -293,7 +291,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
               value: progress, // Dynamic progress
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
               backgroundColor: Colors.white,
             ),
           ),
@@ -323,7 +322,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       ),
     );
   }
-
 
   Column _songdatasection() {
     return Column(
