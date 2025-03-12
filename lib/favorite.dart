@@ -1,7 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 
-class FavoritePage extends StatelessWidget {
+class FavoritePage extends StatefulWidget {
   const FavoritePage({Key? key}) : super(key: key);
+
+  @override
+  State<FavoritePage> createState() => _FavoritePageState();
+}
+
+
+class _FavoritePageState extends State<FavoritePage> {
+   static Future<List<Map<String, String>>> getFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
+    return favoriteSongs.map((song) => Map<String, String>.from(jsonDecode(song))).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getFavorites().then((favorites) {
+      print(favorites);
+    });
+    }
+
+
 
   @override
   Widget build(BuildContext context) {

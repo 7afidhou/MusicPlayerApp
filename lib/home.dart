@@ -1,6 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'favorite.dart';
-// import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'song.dart';
@@ -118,10 +118,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
-  void toggleLike() {
+  void toggleLike() async{
     setState(() {
       isLiked = !isLiked;
     });
+    if (isLiked) {
+      Map<String, String> songt = {
+        "singer": singer,
+        "name": song,
+        "imagePath": imagepath,
+      };
+      final prefs = await SharedPreferences.getInstance();
+      List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
+      String jsonsong=jsonEncode(songt);
+      favoriteSongs.add(jsonsong);
+      prefs.setStringList('favorite_songs', favoriteSongs);
+      
+}
+
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -186,6 +201,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     return "$minutes:$seconds";
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -206,70 +223,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 _progresssection(),
                 const SizedBox(height: 40),
                 _controlsection(),
-
-                // Music Image
-                // Center(
-                //   child: Image.asset(
-                //     'assets/images/Music.jpg',
-                //     width: orientation == Orientation.portrait ? 200 : 150,
-                //     height: orientation == Orientation.portrait ? 200 : 150,
-                //   ),
-                // ),
                 const SizedBox(height: 40),
-
-                // Music Controls
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     if (!hiddenData) ...[
-                //       IconButton(
-                //         onPressed: playPrevious,
-                //         icon: const Icon(Icons.skip_previous,
-                //             size: 80, color: Colors.blue),
-                //       ),
-                //     ],
-                //     const SizedBox(width: 20),
-                //     IconButton(
-                //       onPressed: togglePlayPause,
-                //       icon: Icon(
-                //         isPlaying ? Icons.pause : Icons.play_arrow,
-                //         size: 90,
-                //         color: Colors.blue,
-                //       ),
-                //     ),
-                //     const SizedBox(width: 20),
-                //     if (!hiddenData) ...[
-                //       IconButton(
-                //         onPressed: playNext,
-                //         icon: const Icon(Icons.skip_next,
-                //             size: 80, color: Colors.blue),
-                //       ),
-                //     ],
-                //   ],
-                // ),
-
-                // Like Button & Song Info (only visible after clicking play)
-                // if (!hiddenData) ...[
-                //   const SizedBox(height: 20),
-                //   Row(
-                //     mainAxisAlignment: MainAxisAlignment.center,
-                //     children: [
-                //       IconButton(
-                //         onPressed: toggleLike,
-                //         icon: Icon(
-                //           isLiked ? Icons.favorite : Icons.favorite_border,
-                //           color: isLiked ? Colors.red : Colors.grey,
-                //           size: 40,
-                //         ),
-                //       ),
-                //       Text(
-                //         "$singer - $song",
-                //         style: const TextStyle(fontSize: 20),
-                //       )
-                //     ],
-                //   ),
-                // ],
-                const SizedBox(height: 30),
               ],
             ),
           );
