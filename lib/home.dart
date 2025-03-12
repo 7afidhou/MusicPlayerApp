@@ -3,6 +3,7 @@ import 'favorite.dart';
 // import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'song.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -22,6 +23,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final AudioPlayer _player = AudioPlayer();
   Duration _duration = Duration.zero; 
   Duration _position = Duration.zero;
+  List<Song> songs=songList;
 
   @override
   void initState() {
@@ -96,6 +98,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       clickedTimes++;
       if (clickedTimes > 0) hiddenData = false;
     });
+    print(songs);
   }
 
   Future<void> _pauseMusic() async {
