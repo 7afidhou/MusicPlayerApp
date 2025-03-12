@@ -15,14 +15,14 @@ class Song {
   }
 
 Song song1 =Song(
-      name: 'Song 1',
-      singer: 'Singer 1',
+      name: 'Akbar Anani',
+      singer: 'Marwan Khoury',  
       imagePath: 'assets/images/song1.jpg',
       audioPath: 'audios/Song1.mp3',
       duration: const Duration(minutes: 3, seconds: 30), );
 Song song2 =Song(
-      name: 'Song 2',
-      singer: 'Singer 2',
+      name: '#40 Paradise',
+      singer: 'Ikson',
       imagePath: 'assets/images/song2.jpg',
       audioPath: 'audios/Song2.mp3',
       duration: const Duration(minutes: 4, seconds: 30), );

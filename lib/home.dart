@@ -21,7 +21,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   int clickedTimes = 0;
   String singer = songList[0].singer;
   String song = songList[0].name;
-  String path = songList[0].audioPath;
+  String audiopath = songList[0].audioPath;
+  String imagepath = songList[0].imagePath;
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
   Duration _duration = Duration.zero; 
@@ -72,7 +73,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (state == AppLifecycleState.paused) {
       _pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
-      _resumeMusic(path);
+      _resumeMusic(audiopath);
     }
   }
 
@@ -93,7 +94,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (isPlaying) {
       _player.pause();
     } else {
-      _player.play(AssetSource(path));
+      _player.play(AssetSource(audiopath));
     }
     setState(() {
       isPlaying = !isPlaying;
@@ -155,10 +156,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       setState(() {
         singer = songs[index].singer;
         song = songs[index].name;
-        path = songs[index].audioPath;
+        audiopath = songs[index].audioPath;
+        imagepath = songs[index].imagePath;
         isPlaying = true;
       });
-      _player.play(AssetSource(path));
+      _player.play(AssetSource(audiopath));
     }
   }
   void playPrevious() {
@@ -167,10 +169,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       setState(() {
         singer = songs[index].singer;
         song = songs[index].name;
-        path = songs[index].audioPath;
+        audiopath = songs[index].audioPath;
+        imagepath = songs[index].imagePath;
         isPlaying = true;
       });
-      _player.play(AssetSource(path));
+      _player.play(AssetSource(audiopath));
 
     }
     
@@ -393,8 +396,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   offset: const Offset(4, 4),
                 ),
               ],
-              image: const DecorationImage(
-                image: AssetImage('assets/images/Music.jpg'),
+              image: DecorationImage(
+                image: AssetImage(imagepath),
                 fit: BoxFit.cover,
               ),
             ),
