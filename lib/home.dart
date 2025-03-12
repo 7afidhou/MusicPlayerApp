@@ -13,17 +13,19 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  List<Song> songs=songList;
+  int index=0;
   bool isPlaying = false;
   bool isLiked = false;
   bool hiddenData = true;
   int clickedTimes = 0;
-  String singer = "Marwan Khouri";
-  String song = "Akbar Anani";
+  String singer = songList[0].singer;
+  String song = songList[0].name;
+  String path = songList[0].audioPath;
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
   Duration _duration = Duration.zero; 
-  Duration _position = Duration.zero;
-  List<Song> songs=songList;
+  Duration _position = Duration.zero; 
 
   @override
   void initState() {
@@ -70,7 +72,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (state == AppLifecycleState.paused) {
       _pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
-      _resumeMusic();
+      _resumeMusic(path);
     }
   }
 
@@ -91,14 +93,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (isPlaying) {
       _player.pause();
     } else {
-      _player.play(AssetSource('audios/song.mp3'));
+      _player.play(AssetSource(path));
     }
     setState(() {
       isPlaying = !isPlaying;
       clickedTimes++;
       if (clickedTimes > 0) hiddenData = false;
     });
-    print(songs);
   }
 
   Future<void> _pauseMusic() async {
@@ -109,8 +110,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     });
   }
 
-  Future<void> _resumeMusic() async {
-    await _player.play(AssetSource('audios/song.mp3'), position: _position);
+  Future<void> _resumeMusic(String path) async {
+    await _player.play(AssetSource(path), position: _position);
     setState(() {
       isPlaying = true;
     });
@@ -148,8 +149,32 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  void playNext() {}
-  void playPrevious() {}
+  void playNext() {
+    if (index < songs.length - 1) {
+      index++;
+      setState(() {
+        singer = songs[index].singer;
+        song = songs[index].name;
+        path = songs[index].audioPath;
+        isPlaying = true;
+      });
+      _player.play(AssetSource(path));
+    }
+  }
+  void playPrevious() {
+    if (index > 0) {
+      index--;
+      setState(() {
+        singer = songs[index].singer;
+        song = songs[index].name;
+        path = songs[index].audioPath;
+        isPlaying = true;
+      });
+      _player.play(AssetSource(path));
+
+    }
+    
+  }
 
   String formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
