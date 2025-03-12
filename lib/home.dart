@@ -56,7 +56,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _position = Duration.zero;
       });
     });
-
+    
+    _emptyList();
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -76,6 +77,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _resumeMusic(audiopath);
     }
   }
+
+void _emptyList() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('favorite_songs', []);
+    setState(() {
+      songs = [];
+    });
+  }
+
 
   Future<void> _loadLastPosition() async {
     final prefs = await SharedPreferences.getInstance();

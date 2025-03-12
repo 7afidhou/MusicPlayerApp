@@ -9,52 +9,69 @@ class FavoritePage extends StatefulWidget {
   State<FavoritePage> createState() => _FavoritePageState();
 }
 
-
 class _FavoritePageState extends State<FavoritePage> {
-   static Future<List<Map<String, String>>> getFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
-    return favoriteSongs.map((song) => Map<String, String>.from(jsonDecode(song))).toList();
-  }
+  List<Map<String, String>> favoriteSongs = [];
 
   @override
   void initState() {
     super.initState();
-    getFavorites().then((favorites) {
-      print(favorites);
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    List<String> favoriteSongsData = prefs.getStringList('favorite_songs') ?? [];
+
+    setState(() {
+      favoriteSongs = favoriteSongsData
+          .map((song) => Map<String, String>.from(jsonDecode(song)))
+          .toList();
     });
-    }
-
-
+  }
 
   @override
   Widget build(BuildContext context) {
-    return  Scaffold(
+    return Scaffold(
       backgroundColor: const Color(0xFF181787),
-      appBar:  AppBar(
+      appBar: AppBar(
         backgroundColor: const Color(0xFF181787),
-        iconTheme: const IconThemeData(color: Colors.white,size: 30),
+        iconTheme: const IconThemeData(color: Colors.white, size: 30),
+        title: const Text("Favorites", style: TextStyle(color: Colors.white)),
       ),
-      body: const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.favorite,
-              size: 100,
-              color: Colors.red,
-            ),
-            Text(
-              "Favorite Page",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      body: favoriteSongs.isEmpty
+          ? const Center(
+              child: Text(
+                "No favorites yet!",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: favoriteSongs.length,
+                      itemBuilder: (context, index) {
+                        return Card(
+                          color: Colors.white10,
+                          child: ListTile(
+                            title: Text(
+                              favoriteSongs[index]['singer'] ?? 'Unknown Title',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            subtitle: Text(
+                              favoriteSongs[index]['name'] ?? 'Unknown Artist',
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 }
