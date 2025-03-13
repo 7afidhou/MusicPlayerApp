@@ -37,7 +37,7 @@ class _FavoritePageState extends State<FavoritePage> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF181787),
         iconTheme: const IconThemeData(color: Colors.white, size: 30),
-        title: const Text("Favorites", style: TextStyle(color: Colors.white)),
+        title: const Text("Favorites", style: TextStyle(color: Colors.white,fontFamily: 'Nunito',fontWeight: FontWeight.bold)),
       ),
       body: favoriteSongs.isEmpty
           ? const Center(
@@ -47,29 +47,28 @@ class _FavoritePageState extends State<FavoritePage> {
               ),
             )
           : Padding(
-              padding: const EdgeInsets.all(8.0),
+              padding: const EdgeInsets.only(left: 20, right: 20, top:0),
               child: Column(
                 children: [
                   Expanded(
                     child: ListView.builder(
                       itemCount: favoriteSongs.length,
                       itemBuilder: (context, index) {
-                        return Card(
-                          color: Colors.white10,
+                        return
+                        Padding(
+                          padding: const EdgeInsets.only(left: 0, right: 0, top: 10),
+                          child:Card(
+                          color:  const Color(0xFF181787),
                           child: ListTile(
+                          contentPadding: const EdgeInsets.all(12.0), // Add padding around the ListTile
+
                             leading: Container(
-                              width: 80,
-                              height: 80,
+                              width: 100,
+                              height: 200,
                               decoration: BoxDecoration(
-                                shape: BoxShape.circle, // Makes it round
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.3),
-                                    spreadRadius: 7,
-                                    blurRadius: 10,
-                                    offset: const Offset(4, 4),
-                                  ),
-                                ],
+                                shape: BoxShape.rectangle,
+                                 
+                                // Makes it round
                                 image: DecorationImage(
                                   image: AssetImage(favoriteSongs[index]
                                           ['imagePath'] ??
@@ -80,14 +79,15 @@ class _FavoritePageState extends State<FavoritePage> {
                             ),
                             title: Text(
                               favoriteSongs[index]['name'] ?? 'Unknown Song',
-                              style: const TextStyle(color: Colors.white),
+                              style: const TextStyle(color: Colors.white, fontSize: 18,fontFamily: 'Nunito',fontWeight: FontWeight.bold),
                             ),
                             subtitle: Text(
                               favoriteSongs[index]['singer'] ??
                                   'Unknown Artist',
-                              style: const TextStyle(color: Colors.grey),
+                              style: const TextStyle(color: Colors.grey,fontSize: 12,fontFamily: 'Nunito',fontWeight: FontWeight.bold),
                             ),
                           ),
+                        )
                         );
                       },
                     ),
