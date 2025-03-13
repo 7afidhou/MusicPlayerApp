@@ -4,6 +4,7 @@ class Song {
   String imagePath;
   String audioPath;
   Duration duration;
+  bool isFavorite = false;
 
   Song({
     required this.name,
@@ -26,4 +27,10 @@ Song song2 =Song(
       imagePath: 'assets/images/song2.jpg',
       audioPath: 'audios/Song2.mp3',
       duration: const Duration(minutes: 4, seconds: 30), );
-  List<Song> songList = [song1, song2];
+Song song3 =Song(
+      name: 'Hakawa',
+      singer: 'Asma Lmnawar',
+      imagePath: 'assets/images/song3.jpg',
+      audioPath: 'audios/Song3.mp3',
+      duration: const Duration(minutes: 4, seconds: 30), );
+  List<Song> songList = [song1, song2,song3];

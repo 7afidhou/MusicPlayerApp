@@ -20,7 +20,8 @@ class _FavoritePageState extends State<FavoritePage> {
 
   Future<void> _loadFavorites() async {
     final prefs = await SharedPreferences.getInstance();
-    List<String> favoriteSongsData = prefs.getStringList('favorite_songs') ?? [];
+    List<String> favoriteSongsData =
+        prefs.getStringList('favorite_songs') ?? [];
 
     setState(() {
       favoriteSongs = favoriteSongsData
@@ -56,12 +57,34 @@ class _FavoritePageState extends State<FavoritePage> {
                         return Card(
                           color: Colors.white10,
                           child: ListTile(
+                            leading: Container(
+                              width: 80,
+                              height: 80,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle, // Makes it round
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.3),
+                                    spreadRadius: 7,
+                                    blurRadius: 10,
+                                    offset: const Offset(4, 4),
+                                  ),
+                                ],
+                                image: DecorationImage(
+                                  image: AssetImage(favoriteSongs[index]
+                                          ['imagePath'] ??
+                                      'assets/images/song1.jpg'),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                            ),
                             title: Text(
-                              favoriteSongs[index]['singer'] ?? 'Unknown Title',
+                              favoriteSongs[index]['name'] ?? 'Unknown Song',
                               style: const TextStyle(color: Colors.white),
                             ),
                             subtitle: Text(
-                              favoriteSongs[index]['name'] ?? 'Unknown Artist',
+                              favoriteSongs[index]['singer'] ??
+                                  'Unknown Artist',
                               style: const TextStyle(color: Colors.grey),
                             ),
                           ),

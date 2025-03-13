@@ -81,9 +81,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 void _emptyList() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setStringList('favorite_songs', []);
-    setState(() {
-      songs = [];
-    });
   }
 
 
@@ -128,23 +125,31 @@ void _emptyList() async {
     });
   }
 
-  void toggleLike() async{
-    setState(() {
-      isLiked = !isLiked;
+  void toggleLike() async {
+  setState(() {
+    isLiked = !isLiked;
+    songs[index].isFavorite = isLiked; // Update isFavorite in songs list
+  });
+
+  final prefs = await SharedPreferences.getInstance();
+  List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
+
+  if (isLiked) {
+    // Add song to favorites
+    Map<String, String> songData = {
+      "singer": singer,
+      "name": song,
+      "imagePath": imagepath,
+    };
+    favoriteSongs.add(jsonEncode(songData));
+  } else {
+    favoriteSongs.removeWhere((songJson) {
+      Map<String, dynamic> decodedSong = jsonDecode(songJson);
+      return decodedSong["name"] == song && decodedSong["singer"] == singer;
     });
-    if (isLiked) {
-      Map<String, String> songt = {
-        "singer": singer,
-        "name": song,
-        "imagePath": imagepath,
-      };
-      final prefs = await SharedPreferences.getInstance();
-      List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
-      String jsonsong=jsonEncode(songt);
-      favoriteSongs.add(jsonsong);
-      prefs.setStringList('favorite_songs', favoriteSongs);
-      
-}
+  }
+
+  await prefs.setStringList('favorite_songs', favoriteSongs);
 
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -175,34 +180,35 @@ void _emptyList() async {
     );
   }
 
-  void playNext() {
-    if (index < songs.length - 1) {
-      index++;
-      setState(() {
-        singer = songs[index].singer;
-        song = songs[index].name;
-        audiopath = songs[index].audioPath;
-        imagepath = songs[index].imagePath;
-        isPlaying = true;
-      });
-      _player.play(AssetSource(audiopath));
-    }
+void playNext() {
+  if (index < songs.length - 1) {
+    setState(() { 
+      index++;  // Move index inside setState for UI updates
+      updateSongDetails();
+    });
+    _player.play(AssetSource(audiopath));
   }
-  void playPrevious() {
-    if (index > 0) {
-      index--;
-      setState(() {
-        singer = songs[index].singer;
-        song = songs[index].name;
-        audiopath = songs[index].audioPath;
-        imagepath = songs[index].imagePath;
-        isPlaying = true;
-      });
-      _player.play(AssetSource(audiopath));
+}
 
-    }
-    
+void playPrevious() {
+  if (index > 0) {
+    setState(() { 
+      index--;  // Move index inside setState for UI updates
+      updateSongDetails();
+    });
+    _player.play(AssetSource(audiopath));
   }
+}
+
+// Helper function to update song details
+void updateSongDetails() {
+  singer = songs[index].singer;
+  song = songs[index].name;
+  audiopath = songs[index].audioPath;
+  imagepath = songs[index].imagePath;
+  isLiked = songs[index].isFavorite;
+  isPlaying = true;
+}
 
   String formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
