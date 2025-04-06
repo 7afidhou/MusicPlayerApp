@@ -23,6 +23,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   String song = songList[0].name;
   String audiopath = songList[0].audioPath;
   String imagepath = songList[0].imagePath;
+  String lyrics = songList[0].lyrics;
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
   Duration _duration = Duration.zero; 
@@ -140,6 +141,7 @@ void _emptyList() async {
       "singer": singer,
       "name": song,
       "imagePath": imagepath,
+      "lyrics":lyrics
     };
     favoriteSongs.add(jsonEncode(songData));
   } else {
