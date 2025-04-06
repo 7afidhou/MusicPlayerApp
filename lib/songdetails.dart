@@ -12,7 +12,7 @@ class SongDetailPage extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: const Color(0xFF181787),
         iconTheme: const IconThemeData(color: Colors.white, size: 30),
-        title: const Text("Song Details", style: TextStyle(color: Colors.white)),
+        title: const Text("Song Lyrics", style: TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(  // Wrapping the body in a SingleChildScrollView
         child: Padding(
@@ -24,7 +24,7 @@ class SongDetailPage extends StatelessWidget {
               // Image.asset(song['imagePath'] ?? 'assets/images/song1.jpg'),
               // SizedBox(height: 20),
               Text(
-                song['lyrics'] ?? 'No lyrics available',
+                song['lyrics']=="" ? 'No lyrics available':song['lyrics']!,
                 style: const TextStyle(color: Colors.white, fontSize: 20),
               ),
               const SizedBox(height: 10),

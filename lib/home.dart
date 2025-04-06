@@ -182,7 +182,12 @@ void goToFavorites() {
     context,
     MaterialPageRoute(builder: (context) => const FavoritePage()),
   ).then((_) {
-    _player.resume(); // Resume when coming back
+    _player.resume();
+     // Resume when coming back
+     setState(() {
+       isPlaying = true;
+        // Set isPlaying to true when coming back
+     }); // Set isPlaying to true when coming back
   });
 }
 
@@ -214,6 +219,7 @@ void updateSongDetails() {
   audiopath = songs[index].audioPath;
   imagepath = songs[index].imagePath;
   isLiked = songs[index].isFavorite;
+  lyrics = songs[index].lyrics;
   isPlaying = true;
 }
 

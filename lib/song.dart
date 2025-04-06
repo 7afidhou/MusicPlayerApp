@@ -57,7 +57,7 @@ Song song2 =Song(
       imagePath: 'assets/images/song2.jpg',
       audioPath: 'audios/Song2.mp3',
       duration: const Duration(minutes: 4, seconds: 30), 
-      lyrics: 'hello world');
+      lyrics: '');
 Song song3 =Song(
       name: 'Hakawa',
       singer: 'Asma Lmnawar',

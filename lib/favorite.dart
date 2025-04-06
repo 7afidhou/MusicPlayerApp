@@ -179,7 +179,7 @@ class _FavoritePageState extends State<FavoritePage> {
                       )
                     : const Center(
                         child: Text(
-                          "Select a song to view details.",
+                          "Select a song to view lyrics.",
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
