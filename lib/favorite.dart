@@ -61,13 +61,11 @@ class _FavoritePageState extends State<FavoritePage> {
                           color:  const Color(0xFF181787),
                           child: ListTile(
                           contentPadding: const EdgeInsets.all(12.0), // Add padding around the ListTile
-
                             leading: Container(
                               width: 100,
                               height: 200,
                               decoration: BoxDecoration(
                                 shape: BoxShape.rectangle,
-                                 
                                 // Makes it round
                                 image: DecorationImage(
                                   image: AssetImage(favoriteSongs[index]

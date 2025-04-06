@@ -173,12 +173,17 @@ void _emptyList() async {
     );
   }
 
-  void goToFavorites() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const FavoritePage()),
-    );
-  }
+void goToFavorites() {
+  _player.pause(); // Pause when navigating
+
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const FavoritePage()),
+  ).then((_) {
+    _player.resume(); // Resume when coming back
+  });
+}
+
 
 void playNext() {
   if (index < songs.length - 1) {
