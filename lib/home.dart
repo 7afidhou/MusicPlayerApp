@@ -293,9 +293,9 @@ void updateSongDetails() {
   }
 
   Padding _progresssection() {
-    double progress = _duration.inSeconds > 0
-        ? _position.inSeconds / _duration.inSeconds
-        : 0.0; // Calculate progress
+    // double progress = _duration.inSeconds > 0
+    //     ? _position.inSeconds / _duration.inSeconds
+    //     : 0.0; // Calculate progress
 
 return Padding(
   padding: const EdgeInsets.symmetric(horizontal: 10),

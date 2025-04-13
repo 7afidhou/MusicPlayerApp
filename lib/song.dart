@@ -23,7 +23,8 @@ Song song1 =Song(
       imagePath: 'assets/images/song1.jpg',
       audioPath: 'audios/Song1.mp3',
       duration: const Duration(minutes: 3, seconds: 30), 
-      lyrics:'''بعرف منك إلي
+      lyrics:'''
+بعرف منك إلي
 ولا رح بتكوني يوم
 بعرف هوانا مرحلة
 واقف عبابي اللوم
@@ -102,7 +103,8 @@ Song song4 =Song(
       imagePath: 'assets/images/song4.jpg',
       audioPath: 'audios/Song4.mp3',
       duration: const Duration(minutes: 4, seconds: 30), 
-      lyrics: '''ما بلاش تغيب عنا تاني
+      lyrics: '''
+ما بلاش تغيب عنا تاني
 ما بلاش يا سايب اراضينا
 ما بلاش تغيب عنا تاني
 ما بلاش
@@ -149,4 +151,68 @@ Song song4 =Song(
  ''');
 
 
-  List<Song> songList = [song1, song2,song3,song4];
+Song song5 =Song(
+      name: 'Baddy doub',
+      singer: 'Elissa',
+      imagePath: 'assets/images/song5.jpg',
+      audioPath: 'audios/Song5.mp3',
+      duration: const Duration(minutes: 4, seconds: 30), 
+      lyrics: ''' 
+عيني عيني عليك ورموشي حواليك
+إسقيني من حبك بصرخ لبيك
+مهما ليلي طال وزلغط الموال
+بدي إحساسك يحملني إليك
+
+
+بدي دوب
+قلي قلي بجنون
+بحبك أنا مجنون
+ما بنسى حبك يوم
+بدي دوب
+قلي قلي بجنون
+بحبك أنا مجنون
+ما بنسى حبك يوم
+
+
+يا لالالي قلي بحبك قلي
+قلي قلي بحلم
+يا لالالي غني وصوتك علي
+غني غني بفهم
+
+
+Que me dice "te quiero", "te amo"
+Y venga conmigo y dame tu calor
+Por tu cara bonita de chozna de santa
+De reina te daré miss amor
+
+    
+ليلي ليلي نهار وعمري كله نهار
+إغمرني بعيونك محي الأسرار
+قلبي قلبي نار وعم تحرقني النار
+بدي ع إيدك كفي المشوار
+
+
+بدي دوب
+قلي قلي بجنون
+بحبك أنا مجنون
+ما بنسى حبك يوم
+بدي دوب
+قلي قلي بجنون
+بحبك أنا مجنون
+ما بنسى حبك يوم
+
+
+يا لالالي قلي بحبك قلي
+قلي قلي بحلم
+يا لالالي غني وصوتك علي
+غني غني بفهم
+
+
+Que me dice "te quiero", "te amo"
+Y venga conmigo y dame tu calor
+Por tu cara bonita de chozna de santa
+De reina te daré miss amor
+
+      ''');
+
+  List<Song> songList = [song1, song2,song3,song4,song5];
