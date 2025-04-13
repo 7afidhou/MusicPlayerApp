@@ -279,7 +279,7 @@ void updateSongDetails() {
                   ? Icons.pause_circle_filled_rounded
                   : Icons.play_circle_filled_rounded,
               size: 100,
-              color: Color(0xff796EF8),
+              color: const Color(0xff796EF8),
             ),
           ),
           IconButton(
@@ -292,15 +292,14 @@ void updateSongDetails() {
     );
   }
 
-  Padding _progresssection() {
+  Column _progresssection() {
     // double progress = _duration.inSeconds > 0
     //     ? _position.inSeconds / _duration.inSeconds
     //     : 0.0; // Calculate progress
 
-return Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 10),
-  child: Column(
-    children: [
+return Column(
+  children:
+  [
       SliderTheme(
         data: SliderTheme.of(context).copyWith(
           trackHeight: 4,
@@ -327,8 +326,9 @@ return Padding(
         ),
       ),
       const SizedBox(height: 3),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      Padding(padding:const EdgeInsets.symmetric(horizontal: 15),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             formatTime(_position),
@@ -338,7 +338,6 @@ return Padding(
                 fontWeight: FontWeight.bold,
                 fontSize: 16),
           ),
-          const SizedBox(width: 200),
           Text(
             formatTime(_duration),
             style: const TextStyle(
@@ -348,10 +347,11 @@ return Padding(
                 fontSize: 16),
           ),
         ],
-      ),
-    ],
-  ),
-);
+      ),)
+
+      
+    ]
+    );
   }
 
   Column _songdatasection() {

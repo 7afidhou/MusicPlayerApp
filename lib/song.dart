@@ -215,4 +215,74 @@ De reina te daré miss amor
 
       ''');
 
-  List<Song> songList = [song1, song2,song3,song4,song5];
+Song song6 =Song(
+      name: 'Balader',
+      singer: 'Soolking ft. Niska',
+      imagePath: 'assets/images/song6.jpg',
+      audioPath: 'audios/Song6.mp3',
+      duration: const Duration(minutes: 4, seconds: 30), 
+      lyrics: '''  
+Wah (toh-toh-toh-toh)
+Bébé, j'fais des sous, j'rentre tard
+C'est léger, j'suis pas trop fêtard
+J'suis léwé, j'roule sur la costa
+Ma te-tê sur les tous les posters
+J'ai visé tout là-haut (là-haut) écouté jusqu'à Macao
+Tu critiques mais t'es K.O
+Là, c'est Soolking et Charo des charos (Boumi')
+Ouh oui, elle veut que j'bois dans son verre (c'est la merde)
+Ouh oui, elle veut l'faire dans l'Range Rover (dans la tchop)
+Ouh oui, elle veut que j'bois dans son verre (oh my God)
+Ouh oui, elle veut l'faire dans l'Range Rover (gang, gang, gang)
+J'veux m'balader (sale) mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie (my life)
+Même si j'fais l'tour du monde (oh, oui)
+J'veux m'balader (gang) mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie (ouais)
+Même si j'fais l'tour du monde
+Encaisser des kichtas, on est bons qu'à ça
+Alger, Bériz, Kinshasa
+Mais pourquoi le binks ne me quitte pas? (Mais pourquoi?)
+J'ai sorti le bail qui les fait danser
+Elle aime trop ma musique, elle aime que ça
+Alger, Bériz, Kinshasa
+Mais pourquoi le binks ne me quitte pas?
+J'ai sorti le bail qui les fait danser
+C'est trop d'la D (oui)
+C'est plus la même qu'avant (han, han)
+Chacal, crois pas qu'on t'a zappé (nan)
+On va t'chercher dans toute la France
+J'fais bouger les tisses-mé (ah, ah)
+J'fais partir le tos-ma (ah, ah)
+La zone, elle est minée (ah, ah)
+Faut v'-esqui les menottes (ah, ah)
+Charlie, Delta au quartier latin
+Diogo Jota ou Kyky Lottin
+Méchant, méchant, on a gâté le coin
+Un peu plus longtemps, on est culottés
+Ouh oui, elle veut que j'bois dans son verre (c'est la merde)
+Ouh oui, elle veut l'faire dans l'Range Rover (dans la tchop)
+Ouh oui, elle veut que j'bois dans son verre (oh my God)
+Ouh oui, elle veut l'faire dans l'Range Rover (gang, gang, gang)
+J'veux m'balader (sale) mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie (my life)
+Même si j'fais l'tour du monde (oh, oui)
+J'veux m'balader (gang) mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie (ouais)
+Même si j'fais l'tour du monde
+Encaisser des kichtas, on est bons qu'à ça
+Alger, Bériz, Kinshasa
+Mais pourquoi le binks ne me quitte pas? (Mais pourquoi?)
+J'ai sorti le bail qui les fait danser
+Elle aime trop ma musique, elle aime que ça
+Alger, Bériz, Kinshasa
+Mais pourquoi le binks ne me quitte pas?
+J'ai sorti le bail qui les fait danser
+J'veux m'balader mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie
+Même si j'fais l'tour du monde
+J'veux m'balader mais c'est plus comme avant
+J'chanterai l'quartier toute ma vie
+Même si j'fais l'tour du monde
+      ''');
+  List<Song> songList = [song1, song2,song3,song4,song5,song6];
