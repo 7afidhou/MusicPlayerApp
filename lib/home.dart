@@ -297,44 +297,61 @@ void updateSongDetails() {
         ? _position.inSeconds / _duration.inSeconds
         : 0.0; // Calculate progress
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
+return Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 10),
+  child: Column(
+    children: [
+      SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 4,
+          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+          activeTrackColor: const Color(0xff796EF8),
+          inactiveTrackColor: Colors.white,
+          thumbColor: const Color(0xff796EF8),
+        ),
+        child: Slider(
+          min: 0,
+          max: _duration.inMilliseconds.toDouble(),
+          value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
+          onChanged: (value) {
+            // Set new position but don't seek yet
+            setState(() {
+              _position = Duration(milliseconds: value.toInt());
+            });
+          },
+          onChangeEnd: (value) {
+            // Actually seek the audio
+            _player.seek(Duration(milliseconds: value.toInt()));
+          },
+        ),
+      ),
+      const SizedBox(height: 3),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress, // Dynamic progress
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xff796EF8)),
-              backgroundColor: Colors.white,
-            ),
+          Text(
+            formatTime(_position),
+            style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.bold,
+                fontSize: 16),
           ),
-          const SizedBox(height: 3),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                formatTime(_position), // Current time
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-              Text(
-                formatTime(_duration), // Total duration
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontFamily: 'Nunito',
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16),
-              ),
-            ],
+          const SizedBox(width: 200),
+          Text(
+            formatTime(_duration),
+            style: const TextStyle(
+                color: Colors.white,
+                fontFamily: 'Nunito',
+                fontWeight: FontWeight.bold,
+                fontSize: 16),
           ),
         ],
       ),
-    );
+    ],
+  ),
+);
   }
 
   Column _songdatasection() {
