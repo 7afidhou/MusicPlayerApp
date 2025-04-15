@@ -284,4 +284,42 @@ J'veux m'balader mais c'est plus comme avant
 J'chanterai l'quartier toute ma vie
 Même si j'fais l'tour du monde
       ''');
-  List<Song> songList = [song1, song2,song3,song4,song5,song6];
+
+Song song7 =Song(
+      name: 'Baadi Metzaker',
+      singer: 'Moussa Mostafa',
+      imagePath: 'assets/images/song7.jpg',
+      audioPath: 'audios/Song7.mp3',
+      lyrics: '''
+بعدي متذكر همساتك من أيام الطفولة
+بعدها رنة حكياتك بلون القمر مجدولة
+ودعنا الليلة ضحكاتك واستقبلنا هالاحزان
+
+
+صوت الذكرى عم بينادي وينك يا قمر الزمان
+والورد و البيلسان و الوفا و كل الحنان
+عم بذكر أيام الماضي
+عم بذكر كل اللي كان
+
+
+سافرت بكير.. ع السماء البعيدة
+شو هالكون صغير ..
+هالدنيا وحيدة ..
+فضيت علي من بعدك ..
+فضيت لما أنا ودعتك ..
+وانتهى بلحظة الاوان ..
+
+
+شو زرعت وردة بإيديك و حليت الفضاء..
+شو كان قاسي عليك بحكمه هالقضاء..
+وقف على باب الزمان ..
+وبقيت بنفس المكان ..
+لما كنت و لما كان
+والورد و البيلسان و الوفا و كل الحنان
+عم بذكر أيام الماضي
+عم بذكر كل اللي كان
+
+ ''');
+
+
+  List<Song> songList = [song1, song2,song3,song4,song5,song6,song7];

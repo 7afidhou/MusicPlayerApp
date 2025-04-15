@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'favorite.dart';
 import 'package:audioplayers/audioplayers.dart';
@@ -84,7 +83,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
 void _loadFavorites() async {
   List<Map> songsfetched = await db.readsongs();
-  print(songsfetched);
   setState(() {
     songsfetched.forEach((song) {
       likedsongs.add(Song(
@@ -233,14 +231,8 @@ void updateSongDetails() {
   imagepath = songs[index].imagePath;
   lyrics = songs[index].lyrics;
   isPlaying = true;
- print("Song: $song, Singer: $singer"); // Debugging line to check song details
 bool songExists = likedsongs.any((s) => s.name == song && s.singer == singer);
- print(likedsongs);
- print("Song exists: $songExists"); // Debugging line to check if song exists
-
-  // Update isLiked based on whether the song exists in the liked songs list
  setState(() {
-    // Check if the song exists in the liked songs listif (songExists){
     if (songExists){
    isLiked = true;}
   else {

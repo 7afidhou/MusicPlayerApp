@@ -69,6 +69,7 @@ flutter:
     - assets/images/song4.jpg
     - assets/images/song5.jpg
     - assets/images/song6.jpg
+    - assets/images/song7.jpg
     - assets/images/Play.jpg
     - assets/images/Pause.png
     - assets/audios/Song1.mp3
@@ -77,6 +78,7 @@ flutter:
     - assets/audios/Song4.mp3
     - assets/audios/Song5.mp3
     - assets/audios/Song6.mp3
+    - assets/audios/Song7.mp3
 
 
   # An image asset can refer to one or more resolution-specific "variants", see
