@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import 'songdetails.dart';
+import 'db.dart';
 class FavoritePage extends StatefulWidget {
   const FavoritePage({Key? key}) : super(key: key);
 
@@ -10,8 +9,10 @@ class FavoritePage extends StatefulWidget {
 }
 
 class _FavoritePageState extends State<FavoritePage> {
-  List<Map<String, String>> favoriteSongs = [];
-    Map<String, String>? _selectedSong;
+  Helper db = Helper();
+
+  List<Map<String, dynamic>> favoriteSongs = [];
+  Map<String, dynamic>? _selectedSong;
 
   @override
   void initState() {
@@ -20,15 +21,20 @@ class _FavoritePageState extends State<FavoritePage> {
   }
 
   Future<void> _loadFavorites() async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> favoriteSongsData =
-        prefs.getStringList('favorite_songs') ?? [];
-
+    List<Map<String, dynamic>> songList = await db.readData("SELECT * FROM items");
     setState(() {
-      favoriteSongs = favoriteSongsData
-          .map((song) => Map<String, String>.from(jsonDecode(song)))
-          .toList();
-    });
+      favoriteSongs = songList.map((song) {
+        return {
+          'name': song['name'] ?? 'Unknown Song',
+          'singer': song['singer'] ?? 'Unknown Artist',
+          'imagePath': song['imagePath'] ?? 'assets/images/song1.jpg',
+          'audioPath': song['audioPath'] ?? 'audios/Song1.mp3',
+          'lyrics': song['lyrics'] ?? 'No lyrics available',
+        };
+      }).toList();
+      
+}); 
+
   }
 
   @override

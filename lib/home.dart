@@ -4,6 +4,7 @@ import 'favorite.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'song.dart';
+import 'db.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,7 +14,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  List<Song> songs=songList;
+  List<Song> likedsongs=[];
+  List<Song> songs= songList;
   int index=0;
   bool isPlaying = false;
   bool isLiked = false;
@@ -28,6 +30,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   final AudioPlayer _player = AudioPlayer();
   Duration _duration = Duration.zero; 
   Duration _position = Duration.zero; 
+  Helper db = Helper();
 
   @override
   void initState() {
@@ -36,7 +39,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       vsync: this,
       duration: const Duration(seconds: 20),
     )..repeat();
-
+    _loadFavorites();
     _loadLastPosition();
 
     _player.onDurationChanged.listen((newDuration) {
@@ -57,8 +60,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _position = Duration.zero;
       });
     });
+
+      
+
     
-    _emptyList();
+   
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -79,10 +85,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-void _emptyList() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('favorite_songs', []);
+void _loadFavorites() async {
+ // Fetch all songs from DB
+   List<Map> songsfetched = await db.readsongs();
+   songsfetched.map((song){
+    likedsongs.add(Song(name: song['name'], singer: song['singer'], imagePath: song['imagePath'], audioPath: song['audioPath'], duration: song['duration'], lyrics: song['lyrics']));
+   });
+
+  bool songExists = likedsongs.any((song) =>song.name == song && song.singer== singer);
+ if (songExists){
+   isLiked = true;}
+  else {
+   isLiked = false;
   }
+ 
+}
 
 
   Future<void> _loadLastPosition() async {
@@ -132,26 +149,15 @@ void _emptyList() async {
     songs[index].isFavorite = isLiked; // Update isFavorite in songs list
   });
 
-  final prefs = await SharedPreferences.getInstance();
-  List<String> favoriteSongs = prefs.getStringList('favorite_songs') ?? [];
-
   if (isLiked) {
     // Add song to favorites
-    Map<String, String> songData = {
-      "singer": singer,
-      "name": song,
-      "imagePath": imagepath,
-      "lyrics":lyrics
-    };
-    favoriteSongs.add(jsonEncode(songData));
+    await db.insertsong(songs[index]); // Save to database
+ // Debugging line to check song list
   } else {
-    favoriteSongs.removeWhere((songJson) {
-      Map<String, dynamic> decodedSong = jsonDecode(songJson);
-      return decodedSong["name"] == song && decodedSong["singer"] == singer;
-    });
+    await db.deletesongByNameAndSinger(song, singer);
+
   }
 
-  await prefs.setStringList('favorite_songs', favoriteSongs);
 
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -218,9 +224,21 @@ void updateSongDetails() {
   song = songs[index].name;
   audiopath = songs[index].audioPath;
   imagepath = songs[index].imagePath;
-  isLiked = songs[index].isFavorite;
   lyrics = songs[index].lyrics;
   isPlaying = true;
+
+ bool songExists = likedsongs.any((song) =>song.name == song && song.singer== singer);
+ if (songExists){
+   setState(() {
+    isLiked = true; // Update isLiked based on the song's existence in favorites
+   });
+   
+  }
+  else {
+   setState(() {
+    isLiked = false; // Update isLiked based on the song's existence in favorites
+   });
+  }
 }
 
   String formatTime(Duration duration) {

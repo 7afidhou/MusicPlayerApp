@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SongDetailPage extends StatelessWidget {
-  final Map<String, String> song;
+  final Map<String, dynamic> song;
 
   const SongDetailPage({Key? key, required this.song}) : super(key: key);
 
