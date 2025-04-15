@@ -35,11 +35,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
+    _loadFavorites();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 20),
     )..repeat();
-    _loadFavorites();
+    
     _loadLastPosition();
 
     _player.onDurationChanged.listen((newDuration) {
@@ -61,10 +62,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       });
     });
 
-      
-
-    
-   
     WidgetsBinding.instance.addObserver(this);
   }
 
@@ -86,21 +83,31 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
 void _loadFavorites() async {
- // Fetch all songs from DB
-   List<Map> songsfetched = await db.readsongs();
-   songsfetched.map((song){
-    likedsongs.add(Song(name: song['name'], singer: song['singer'], imagePath: song['imagePath'], audioPath: song['audioPath'], duration: song['duration'], lyrics: song['lyrics']));
-   });
+  List<Map> songsfetched = await db.readsongs();
+  print(songsfetched);
+  setState(() {
+    songsfetched.forEach((song) {
+      likedsongs.add(Song(
+        name: song['name'],
+        singer: song['singer'],
+        imagePath: song['imagePath'],
+        audioPath: song['audioPath'],
+        lyrics: song['lyrics'],
+      ));
+    });
+  });
 
-  bool songExists = likedsongs.any((song) =>song.name == song && song.singer== singer);
- if (songExists){
+bool songExists = likedsongs.any((s) => s.name == song && s.singer == singer);
+setState(() {
+    // Check if the song exists in the liked songs listif (songExists){
+    if (songExists){
    isLiked = true;}
   else {
    isLiked = false;
   }
- 
-}
+  });
 
+}
 
   Future<void> _loadLastPosition() async {
     final prefs = await SharedPreferences.getInstance();
@@ -226,19 +233,20 @@ void updateSongDetails() {
   imagepath = songs[index].imagePath;
   lyrics = songs[index].lyrics;
   isPlaying = true;
+ print("Song: $song, Singer: $singer"); // Debugging line to check song details
+bool songExists = likedsongs.any((s) => s.name == song && s.singer == singer);
+ print(likedsongs);
+ print("Song exists: $songExists"); // Debugging line to check if song exists
 
- bool songExists = likedsongs.any((song) =>song.name == song && song.singer== singer);
- if (songExists){
-   setState(() {
-    isLiked = true; // Update isLiked based on the song's existence in favorites
-   });
-   
-  }
+  // Update isLiked based on whether the song exists in the liked songs list
+ setState(() {
+    // Check if the song exists in the liked songs listif (songExists){
+    if (songExists){
+   isLiked = true;}
   else {
-   setState(() {
-    isLiked = false; // Update isLiked based on the song's existence in favorites
-   });
+   isLiked = false;
   }
+  });
 }
 
   String formatTime(Duration duration) {

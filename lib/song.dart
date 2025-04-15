@@ -3,7 +3,7 @@ class Song {
   String singer;
   String imagePath;
   String audioPath;
-  Duration duration;
+  Duration duration=Duration(seconds: 0);
   bool isFavorite = false;
   String lyrics;
 
@@ -12,7 +12,6 @@ class Song {
     required this.singer,
     required this.imagePath,
     required this.audioPath,
-    required this.duration,
     required this.lyrics,
   });
   }
@@ -22,7 +21,7 @@ Song song1 =Song(
       singer: 'Marwan Khoury',  
       imagePath: 'assets/images/song1.jpg',
       audioPath: 'audios/Song1.mp3',
-      duration: const Duration(minutes: 3, seconds: 30), 
+
       lyrics:'''
 بعرف منك إلي
 ولا رح بتكوني يوم
@@ -57,14 +56,14 @@ Song song2 =Song(
       singer: 'Ikson',
       imagePath: 'assets/images/song2.jpg',
       audioPath: 'audios/Song2.mp3',
-      duration: const Duration(minutes: 4, seconds: 30), 
+      
       lyrics: '');
 Song song3 =Song(
       name: 'Hakawa',
       singer: 'Asma Lmnawar',
       imagePath: 'assets/images/song3.jpg',
       audioPath: 'audios/Song3.mp3',
-      duration: const Duration(minutes: 4, seconds: 30), 
+      
       lyrics: ''' 
 يالاه يالاه معايا
 نعيشوا ليلة نعيشوا يوم
@@ -102,7 +101,7 @@ Song song4 =Song(
       singer: 'Hamaki',
       imagePath: 'assets/images/song4.jpg',
       audioPath: 'audios/Song4.mp3',
-      duration: const Duration(minutes: 4, seconds: 30), 
+       
       lyrics: '''
 ما بلاش تغيب عنا تاني
 ما بلاش يا سايب اراضينا
@@ -156,7 +155,7 @@ Song song5 =Song(
       singer: 'Elissa',
       imagePath: 'assets/images/song5.jpg',
       audioPath: 'audios/Song5.mp3',
-      duration: const Duration(minutes: 4, seconds: 30), 
+      
       lyrics: ''' 
 عيني عيني عليك ورموشي حواليك
 إسقيني من حبك بصرخ لبيك
@@ -220,7 +219,7 @@ Song song6 =Song(
       singer: 'Soolking ft. Niska',
       imagePath: 'assets/images/song6.jpg',
       audioPath: 'audios/Song6.mp3',
-      duration: const Duration(minutes: 4, seconds: 30), 
+      
       lyrics: '''  
 Wah (toh-toh-toh-toh)
 Bébé, j'fais des sous, j'rentre tard
