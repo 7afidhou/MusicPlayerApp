@@ -321,5 +321,11 @@ Song song7 =Song(
 
  ''');
 
-
-  List<Song> songList = [song1, song2,song3,song4,song5,song6,song7];
+Song song8 =Song(
+      name: '4 Chiffres',
+      singer: 'Flenn',
+      imagePath: 'assets/images/song8.jpg',
+      audioPath: 'audios/Song8.mp3',
+      
+      lyrics: '');
+  List<Song> songList = [song1, song2,song3,song4,song5,song6,song7,song8];
