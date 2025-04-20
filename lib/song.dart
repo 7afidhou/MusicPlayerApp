@@ -3,7 +3,7 @@ class Song {
   String singer;
   String imagePath;
   String audioPath;
-  Duration duration=Duration(seconds: 0);
+  Duration duration=const Duration(seconds: 0);
   bool isFavorite = false;
   String lyrics;
 
@@ -21,7 +21,6 @@ Song song1 =Song(
       singer: 'Marwan Khoury',  
       imagePath: 'assets/images/song1.jpg',
       audioPath: 'audios/Song1.mp3',
-
       lyrics:'''
 بعرف منك إلي
 ولا رح بتكوني يوم
@@ -62,8 +61,7 @@ Song song3 =Song(
       name: 'Hakawa',
       singer: 'Asma Lmnawar',
       imagePath: 'assets/images/song3.jpg',
-      audioPath: 'audios/Song3.mp3',
-      
+      audioPath: 'audios/Song3.mp3',    
       lyrics: ''' 
 يالاه يالاه معايا
 نعيشوا ليلة نعيشوا يوم
@@ -155,14 +153,12 @@ Song song5 =Song(
       singer: 'Elissa',
       imagePath: 'assets/images/song5.jpg',
       audioPath: 'audios/Song5.mp3',
-      
       lyrics: ''' 
 عيني عيني عليك ورموشي حواليك
 إسقيني من حبك بصرخ لبيك
 مهما ليلي طال وزلغط الموال
 بدي إحساسك يحملني إليك
 
-
 بدي دوب
 قلي قلي بجنون
 بحبك أنا مجنون
@@ -171,26 +167,22 @@ Song song5 =Song(
 قلي قلي بجنون
 بحبك أنا مجنون
 ما بنسى حبك يوم
-
 
 يا لالالي قلي بحبك قلي
 قلي قلي بحلم
 يا لالالي غني وصوتك علي
 غني غني بفهم
 
-
-Que me dice "te quiero", "te amo"
+Que me dice te quiero, te amo
 Y venga conmigo y dame tu calor
 Por tu cara bonita de chozna de santa
 De reina te daré miss amor
 
-    
 ليلي ليلي نهار وعمري كله نهار
 إغمرني بعيونك محي الأسرار
 قلبي قلبي نار وعم تحرقني النار
 بدي ع إيدك كفي المشوار
 
-
 بدي دوب
 قلي قلي بجنون
 بحبك أنا مجنون
@@ -199,19 +191,16 @@ De reina te daré miss amor
 قلي قلي بجنون
 بحبك أنا مجنون
 ما بنسى حبك يوم
-
 
 يا لالالي قلي بحبك قلي
 قلي قلي بحلم
 يا لالالي غني وصوتك علي
 غني غني بفهم
 
-
-Que me dice "te quiero", "te amo"
+Que me dice te quiero, te amo
 Y venga conmigo y dame tu calor
 Por tu cara bonita de chozna de santa
 De reina te daré miss amor
-
       ''');
 
 Song song6 =Song(
@@ -219,70 +208,69 @@ Song song6 =Song(
       singer: 'Soolking ft. Niska',
       imagePath: 'assets/images/song6.jpg',
       audioPath: 'audios/Song6.mp3',
-      
       lyrics: '''  
 Wah (toh-toh-toh-toh)
-Bébé, j'fais des sous, j'rentre tard
-C'est léger, j'suis pas trop fêtard
-J'suis léwé, j'roule sur la costa
+Bébé, jfais des sous, jrentre tard
+Cest léger, jsuis pas trop fêtard
+Jsuis léwé, jroule sur la costa
 Ma te-tê sur les tous les posters
-J'ai visé tout là-haut (là-haut) écouté jusqu'à Macao
-Tu critiques mais t'es K.O
-Là, c'est Soolking et Charo des charos (Boumi')
-Ouh oui, elle veut que j'bois dans son verre (c'est la merde)
-Ouh oui, elle veut l'faire dans l'Range Rover (dans la tchop)
-Ouh oui, elle veut que j'bois dans son verre (oh my God)
-Ouh oui, elle veut l'faire dans l'Range Rover (gang, gang, gang)
-J'veux m'balader (sale) mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie (my life)
-Même si j'fais l'tour du monde (oh, oui)
-J'veux m'balader (gang) mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie (ouais)
-Même si j'fais l'tour du monde
-Encaisser des kichtas, on est bons qu'à ça
+Jai visé tout là-haut (là-haut) écouté jusquà Macao
+Tu critiques mais tes K.O
+Là, cest Soolking et Charo des charos (Boumi)
+Ouh oui, elle veut que jbois dans son verre (cest la merde)
+Ouh oui, elle veut lfaire dans lRange Rover (dans la tchop)
+Ouh oui, elle veut que jbois dans son verre (oh my God)
+Ouh oui, elle veut lfaire dans lRange Rover (gang, gang, gang)
+Jveux mbalader (sale) mais cest plus comme avant
+Jchanterai lquartier toute ma vie (my life)
+Même si jfais ltour du monde (oh, oui)
+Jveux mbalader (gang) mais cest plus comme avant
+Jchanterai lquartier toute ma vie (ouais)
+Même si jfais ltour du monde
+Encaisser des kichtas, on est bons quà ça
 Alger, Bériz, Kinshasa
 Mais pourquoi le binks ne me quitte pas? (Mais pourquoi?)
-J'ai sorti le bail qui les fait danser
+Jai sorti le bail qui les fait danser
 Elle aime trop ma musique, elle aime que ça
 Alger, Bériz, Kinshasa
 Mais pourquoi le binks ne me quitte pas?
-J'ai sorti le bail qui les fait danser
-C'est trop d'la D (oui)
-C'est plus la même qu'avant (han, han)
-Chacal, crois pas qu'on t'a zappé (nan)
-On va t'chercher dans toute la France
-J'fais bouger les tisses-mé (ah, ah)
-J'fais partir le tos-ma (ah, ah)
+Jai sorti le bail qui les fait danser
+Cest trop dla D (oui)
+Cest plus la même quavant (han, han)
+Chacal, crois pas quon ta zappé (nan)
+On va tchercher dans toute la France
+Jfais bouger les tisses-mé (ah, ah)
+Jfais partir le tos-ma (ah, ah)
 La zone, elle est minée (ah, ah)
-Faut v'-esqui les menottes (ah, ah)
+Faut v-esqui les menottes (ah, ah)
 Charlie, Delta au quartier latin
 Diogo Jota ou Kyky Lottin
 Méchant, méchant, on a gâté le coin
 Un peu plus longtemps, on est culottés
-Ouh oui, elle veut que j'bois dans son verre (c'est la merde)
-Ouh oui, elle veut l'faire dans l'Range Rover (dans la tchop)
-Ouh oui, elle veut que j'bois dans son verre (oh my God)
-Ouh oui, elle veut l'faire dans l'Range Rover (gang, gang, gang)
-J'veux m'balader (sale) mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie (my life)
-Même si j'fais l'tour du monde (oh, oui)
-J'veux m'balader (gang) mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie (ouais)
-Même si j'fais l'tour du monde
-Encaisser des kichtas, on est bons qu'à ça
+Ouh oui, elle veut que jbois dans son verre (cest la merde)
+Ouh oui, elle veut lfaire dans lRange Rover (dans la tchop)
+Ouh oui, elle veut que jbois dans son verre (oh my God)
+Ouh oui, elle veut lfaire dans lRange Rover (gang, gang, gang)
+Jveux mbalader (sale) mais cest plus comme avant
+Jchanterai lquartier toute ma vie (my life)
+Même si jfais ltour du monde (oh, oui)
+Jveux mbalader (gang) mais cest plus comme avant
+Jchanterai lquartier toute ma vie (ouais)
+Même si jfais ltour du monde
+Encaisser des kichtas, on est bons quà ça
 Alger, Bériz, Kinshasa
 Mais pourquoi le binks ne me quitte pas? (Mais pourquoi?)
-J'ai sorti le bail qui les fait danser
+Jai sorti le bail qui les fait danser
 Elle aime trop ma musique, elle aime que ça
 Alger, Bériz, Kinshasa
 Mais pourquoi le binks ne me quitte pas?
-J'ai sorti le bail qui les fait danser
-J'veux m'balader mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie
-Même si j'fais l'tour du monde
-J'veux m'balader mais c'est plus comme avant
-J'chanterai l'quartier toute ma vie
-Même si j'fais l'tour du monde
+Jai sorti le bail qui les fait danser
+Jveux mbalader mais cest plus comme avant
+Jchanterai lquartier toute ma vie
+Même si jfais ltour du monde
+Jveux mbalader mais cest plus comme avant
+Jchanterai lquartier toute ma vie
+Même si jfais ltour du monde
       ''');
 
 Song song7 =Song(
@@ -326,6 +314,63 @@ Song song8 =Song(
       singer: 'Flenn',
       imagePath: 'assets/images/song8.jpg',
       audioPath: 'audios/Song8.mp3',
-      
-      lyrics: '');
+      lyrics: ''' 
+تنساني
+لا، لا ما شكّيتش راح تنساني
+نكملها وحدي، نحاجي كيساني
+ما نحتاج طبيب، عيني ميزاني، يا-إي
+Des années
+حنايا كيف كيف، حنايا des amis
+قاتلي، حسيتك بعيد، حبيت نساميك
+عجبها الحال، جاها حلو لساني، يا-إي
+وانا لتم نخمم كيفاش
+ن quitter ma ville، ن quitter ma terre (terre)
+قعاد ماشي affaire
+حسيت بزهري qui mappelle (pelle)
+صغير وانا كنت نغيص
+حاشيها لي بليس، جراني ل papel (pel)
+شرلي علي كاباو
+البارح كاليني الخوف، دوكا jai pas peur (peur)
+أها، يا زينة، روحي خليني alone
+أها، أني خلوي، نسمع Babylon
+أها، ما ولى يهمني في من نلوم
+أها-ياه، طايحة ف lové، تخافي من love
+يا البابور، larger
+قبل ما تقلع دينا معاك
+خرجني من Alger
+خلي الحومة في الأمان
+عايشينها quatre chiffres
+وjamais عطيتك la promesse
+وعندي larchive
+ضحكت كي قالت، jsuis pas comme elle
+منحبش تجيني بla taille
+نحب تقولي كلمة، غير كي تخممي بلي capable، أه
+لساني ماشي قاطع
+جايبها défense معها حافظ ڭاع les cata, dok
+باش نديها ma part
+طريق سلاك طويلة، وانا ماشي وهمي ف sac à dos
+اليوم نقولوا، ça va
+ڭاع واش جاز علينا، وما حفينا نيف فla baïda
+صوتك mapaise
+وسط الغدرة سلكت à peine
+فيدي سلاحي، je pense à oim
+فيدي وردة، je pense à elle
+نحوس الـ calme، نحوس la paix
+زيد شوية، نحوس ma bae
+Relation fake، شغل طالعة ب la whey
+اطلق لي يديا، نغمض ma haine، ياه
+أها، يا زينة، روحي خليني alone
+أها، أني خلوي، نسمع Babylon
+أها، ما ولى يهمني في من نلوم
+أها-ياه، طايحة ف lové، تخافي من love
+يا البابور، larger
+قبل ما تقلع دينا معاك
+خرجني من Alger
+خلي الحومة في الأمان
+عايشينها quatre chiffres
+وjamais عطيتك la promesse
+وعندي larchive
+ضحكت كي قالت، jsuis pas comme elle
+
+      ''');
   List<Song> songList = [song1, song2,song3,song4,song5,song6,song7,song8];

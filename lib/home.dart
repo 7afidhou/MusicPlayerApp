@@ -163,8 +163,6 @@ setState(() {
 
   }
 
-
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -231,7 +229,7 @@ void updateSongDetails() {
   imagepath = songs[index].imagePath;
   lyrics = songs[index].lyrics;
   isPlaying = true;
-bool songExists = likedsongs.any((s) => s.name == song && s.singer == singer);
+bool songExists = likedsongs.any((s) => s.name == songs[index].name && s.singer == songs[index].singer);
  setState(() {
     if (songExists){
    isLiked = true;}
