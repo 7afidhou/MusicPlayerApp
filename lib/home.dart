@@ -229,7 +229,7 @@ void updateSongDetails() {
   imagepath = songs[index].imagePath;
   lyrics = songs[index].lyrics;
   isPlaying = true;
-bool songExists = likedsongs.any((s) => s.name == songs[index].name && s.singer == songs[index].singer);
+  bool songExists = likedsongs.any((s) => s.name == songs[index].name && s.singer == songs[index].singer);
  setState(() {
     if (songExists){
    isLiked = true;}
