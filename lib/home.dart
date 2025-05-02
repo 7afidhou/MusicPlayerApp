@@ -1,12 +1,16 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'favorite.dart';
-import 'package:audioplayers/audioplayers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'song.dart';
 import 'db.dart';
+import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 //import 'package:marquee/marquee.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -41,13 +45,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   Helper db = Helper();
 
+  StreamSubscription? _accelerometerSubscription;
+  DateTime _lastShakeTime = DateTime.now();
+  final double shakeThreshold = 15.0;
+
   @override
   void initState() {
     super.initState();
     _requestPermission();
     _loadFavorites();
     _loadLastPosition();
-
+    _startListeningToShake();
     _controller = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
     WidgetsBinding.instance.addObserver(this);
 
@@ -76,6 +84,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _player.dispose();
+    _accelerometerSubscription?.cancel();
     super.dispose();
   }
 
@@ -87,6 +96,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _resumeMusic();
     }
   }
+
+void _startListeningToShake() {
+  _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+    double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+    if (acceleration > shakeThreshold) {
+      DateTime now = DateTime.now();
+      if (now.difference(_lastShakeTime).inMilliseconds > 2000) {
+        _lastShakeTime = now;
+        togglePlayPause();
+      }
+    }
+  });
+}
 
   Future<void> _requestPermission() async {
     await Permission.storage.request();
