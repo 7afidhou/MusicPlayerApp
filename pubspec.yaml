@@ -39,7 +39,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.3.3
-
+  permission_handler: ^11.0.1
+  file_picker: ^6.1.1
+  #marquee: ^2.0.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -74,6 +76,7 @@ flutter:
     - assets/images/song8.jpg
     - assets/images/Play.jpg
     - assets/images/Pause.png
+    - assets/images/Music_logo.jpg
     - assets/audios/Song1.mp3
     - assets/audios/Song2.mp3
     - assets/audios/Song3.mp3

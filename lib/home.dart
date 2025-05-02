@@ -4,7 +4,10 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'song.dart';
 import 'db.dart';
-
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
+//import 'package:marquee/marquee.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -13,34 +16,40 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  List<Song> likedsongs=[];
-  List<Song> songs= songList;
-  int index=0;
+  final List<Song> songs = songList;
+  List<Song> likedsongs = [];
+
+  int index = 0;
   bool isPlaying = false;
   bool isLiked = false;
   bool hiddenData = true;
   int clickedTimes = 0;
+
   String singer = songList[0].singer;
   String song = songList[0].name;
   String audiopath = songList[0].audioPath;
   String imagepath = songList[0].imagePath;
   String lyrics = songList[0].lyrics;
+
+  bool isLocalFile = false;
+  String localPath = "";
+
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
-  Duration _duration = Duration.zero; 
-  Duration _position = Duration.zero; 
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+
   Helper db = Helper();
 
   @override
   void initState() {
     super.initState();
+    _requestPermission();
     _loadFavorites();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 20),
-    )..repeat();
-    
     _loadLastPosition();
+
+    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
+    WidgetsBinding.instance.addObserver(this);
 
     _player.onDurationChanged.listen((newDuration) {
       setState(() {
@@ -60,8 +69,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         _position = Duration.zero;
       });
     });
-
-    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
@@ -77,42 +84,33 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (state == AppLifecycleState.paused) {
       _pauseMusic();
     } else if (state == AppLifecycleState.resumed) {
-      _resumeMusic(audiopath);
+      _resumeMusic();
     }
   }
 
-void _loadFavorites() async {
-  List<Map> songsfetched = await db.readsongs();
-  setState(() {
-    songsfetched.forEach((song) {
-      likedsongs.add(Song(
+  Future<void> _requestPermission() async {
+    await Permission.storage.request();
+  }
+
+  Future<void> _loadFavorites() async {
+    List<Map> songsfetched = await db.readsongs();
+    setState(() {
+      likedsongs = songsfetched.map((song) => Song(
         name: song['name'],
         singer: song['singer'],
         imagePath: song['imagePath'],
         audioPath: song['audioPath'],
         lyrics: song['lyrics'],
-      ));
+      )).toList();
+
+      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
     });
-  });
-
-bool songExists = likedsongs.any((s) => s.name == song && s.singer == singer);
-setState(() {
-    // Check if the song exists in the liked songs listif (songExists){
-    if (songExists){
-   isLiked = true;}
-  else {
-   isLiked = false;
   }
-  });
-
-}
 
   Future<void> _loadLastPosition() async {
     final prefs = await SharedPreferences.getInstance();
     int lastPosition = prefs.getInt('last_position') ?? 0;
-    setState(() {
-      _position = Duration(milliseconds: lastPosition);
-    });
+    _position = Duration(milliseconds: lastPosition);
   }
 
   Future<void> _saveLastPosition() async {
@@ -122,300 +120,189 @@ setState(() {
 
   void togglePlayPause() {
     if (isPlaying) {
-      _player.pause();
+      _pauseMusic();
     } else {
-      _player.play(AssetSource(audiopath));
+      if (isLocalFile) {
+        _player.play(DeviceFileSource(localPath)).then((_) {
+          setState(() {
+            isPlaying = true;
+            hiddenData = false;
+            clickedTimes++;
+          });
+        });
+      } else {
+        _player.play(AssetSource(audiopath)).then((_) {
+          setState(() {
+            isPlaying = true;
+            hiddenData = false;
+            clickedTimes++;
+          });
+        });
+      }
     }
-    setState(() {
-      isPlaying = !isPlaying;
-      clickedTimes++;
-      if (clickedTimes > 0) hiddenData = false;
-    });
   }
 
   Future<void> _pauseMusic() async {
     await _saveLastPosition();
     await _player.pause();
-    setState(() {
-      isPlaying = false;
-    });
+    setState(() => isPlaying = false);
   }
 
-  Future<void> _resumeMusic(String path) async {
-    await _player.play(AssetSource(path), position: _position);
+  Future<void> _resumeMusic() async {
+    if (isLocalFile) {
+      await _player.play(DeviceFileSource(localPath), position: _position);
+    } else {
+      await _player.play(AssetSource(audiopath), position: _position);
+    }
+    setState(() => isPlaying = true);
+  }
+
+  void playNext() {
+    if (index < songs.length - 1) {
+      index++;
+      updateSongDetails();
+      _player.play(AssetSource(audiopath));
+    }
+  }
+
+  void playPrevious() {
+    if (index > 0) {
+      index--;
+      updateSongDetails();
+      _player.play(AssetSource(audiopath));
+    }
+  }
+
+  void updateSongDetails() {
+    final current = songs[index];
     setState(() {
+      singer = current.singer;
+      song = current.name;
+      audiopath = current.audioPath;
+      imagepath = current.imagePath;
+      lyrics = current.lyrics;
+      isLocalFile = false;
       isPlaying = true;
+      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
     });
   }
+void pickAudioFile() async {
+  final result = await FilePicker.platform.pickFiles(type: FileType.audio);
+  if (result != null && result.files.single.path != null) {
+    localPath = result.files.single.path!;
+    isLocalFile = true;
+
+    await _player.setSource(DeviceFileSource(localPath));
+    _player.getDuration().then((d) {
+      final filename = p.basenameWithoutExtension(localPath); // Extract filename without extension
+
+      setState(() {
+        _duration = d ?? Duration.zero;
+        song = filename; // Use filename as song title
+        singer = "Local Artist";
+        imagepath = "assets/images/Music_logo.jpg";
+      });
+
+      togglePlayPause(); // Play the uploaded song
+    });
+  }
+}
+
 
   void toggleLike() async {
-  setState(() {
-    isLiked = !isLiked;
-    songs[index].isFavorite = isLiked; // Update isFavorite in songs list
-  });
+    setState(() {
+      isLiked = !isLiked;
+      songs[index].isFavorite = isLiked;
+    });
 
-  if (isLiked) {
-    // Add song to favorites
-    await db.insertsong(songs[index]); // Save to database
- // Debugging line to check song list
-  } else {
-    await db.deletesongByNameAndSinger(song, singer);
-
-  }
+    if (isLiked) {
+      await db.insertsong(songs[index]);
+    } else {
+      await db.deletesongByNameAndSinger(song, singer);
+    }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           isLiked ? "Added to Liked Songs" : "Removed from Liked Songs",
-          style: const TextStyle(
-              color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: isLiked
-            ? Colors.green
-            : Colors.red, // Different colors for like/unlike
-        behavior: SnackBarBehavior.floating, // Floating effect
-        elevation: 6.0, // Shadow effect
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12), // Rounded corners
-        ),
-        duration:
-            const Duration(seconds: 1), // Controls how long it stays visible
+        backgroundColor: isLiked ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+        elevation: 6,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
 
-void goToFavorites() {
-  _player.pause(); // Pause when navigating
-
-  Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => const FavoritePage()),
-  ).then((_) {
-    _player.resume();
-     // Resume when coming back
-     setState(() {
-       isPlaying = true;
-        // Set isPlaying to true when coming back
-     }); // Set isPlaying to true when coming back
-  });
-}
-
-
-void playNext() {
-  if (index < songs.length - 1) {
-    setState(() { 
-      index++;  // Move index inside setState for UI updates
-      updateSongDetails();
+  void goToFavorites() {
+    _pauseMusic();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritePage())).then((_) {
+      _resumeMusic();
     });
-    _player.play(AssetSource(audiopath));
   }
-}
-
-void playPrevious() {
-  if (index > 0) {
-    setState(() { 
-      index--;  // Move index inside setState for UI updates
-      updateSongDetails();
-    });
-    _player.play(AssetSource(audiopath));
-  }
-}
-
-// Helper function to update song details
-void updateSongDetails() {
-  singer = songs[index].singer;
-  song = songs[index].name;
-  audiopath = songs[index].audioPath;
-  imagepath = songs[index].imagePath;
-  lyrics = songs[index].lyrics;
-  isPlaying = true;
-  bool songExists = likedsongs.any((s) => s.name == songs[index].name && s.singer == songs[index].singer);
- setState(() {
-    if (songExists){
-   isLiked = true;}
-  else {
-   isLiked = false;
-  }
-  });
-}
 
   String formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return "$minutes:$seconds";
+    return "${twoDigits(duration.inMinutes.remainder(60))}:${twoDigits(duration.inSeconds.remainder(60))}";
   }
-
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF181787),
-      body: OrientationBuilder(
-        builder: (context, orientation) {
-          return SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                _appheader(),
-                const SizedBox(height: 45),
-                _photosection(),
-                const SizedBox(height: 20),
-                _songdatasection(),
-                const SizedBox(height: 40),
-                _progresssection(),
-                const SizedBox(height: 40),
-                _controlsection(),
-                const SizedBox(height: 40),
-              ],
-            ),
-          );
-        },
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            _appheader(),
+            const SizedBox(height: 45),
+            _photosection(),
+            const SizedBox(height: 20),
+            _songdatasection(),
+            const SizedBox(height: 40),
+            _progresssection(),
+            const SizedBox(height: 40),
+            _controlsection(),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }
 
-  Padding _controlsection() {
+  Padding _appheader() {
     return Padding(
-      padding: const EdgeInsets.only(left: 10, right: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(
-            onPressed: playPrevious,
-            icon: const Icon(Icons.skip_previous_outlined,
-                size: 60, color: Colors.white),
-          ),
-          IconButton(
-            onPressed: togglePlayPause,
-            icon: Icon(
-              isPlaying
-                  ? Icons.pause_circle_filled_rounded
-                  : Icons.play_circle_filled_rounded,
-              size: 100,
-              color: const Color(0xff796EF8),
-            ),
-          ),
-          IconButton(
-            onPressed: playNext,
-            icon: const Icon(Icons.skip_next_outlined,
-                size: 60, color: Colors.white),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30)),
+          Text("$song by $singer", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          GestureDetector(
+            onTap: toggleLike,
+            onLongPress: goToFavorites,
+            child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.white, size: 30),
           ),
         ],
       ),
-    );
-  }
-
-  Column _progresssection() {
-    // double progress = _duration.inSeconds > 0
-    //     ? _position.inSeconds / _duration.inSeconds
-    //     : 0.0; // Calculate progress
-
-return Column(
-  children:
-  [
-      SliderTheme(
-        data: SliderTheme.of(context).copyWith(
-          trackHeight: 4,
-          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-          activeTrackColor: const Color(0xff796EF8),
-          inactiveTrackColor: Colors.white,
-          thumbColor: const Color(0xff796EF8),
-        ),
-        child: Slider(
-          min: 0,
-          max: _duration.inMilliseconds.toDouble(),
-          value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
-          onChanged: (value) {
-            // Set new position but don't seek yet
-            setState(() {
-              _position = Duration(milliseconds: value.toInt());
-            });
-          },
-          onChangeEnd: (value) {
-            // Actually seek the audio
-            _player.seek(Duration(milliseconds: value.toInt()));
-          },
-        ),
-      ),
-      const SizedBox(height: 3),
-      Padding(padding:const EdgeInsets.symmetric(horizontal: 15),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            formatTime(_position),
-            style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.bold,
-                fontSize: 16),
-          ),
-          Text(
-            formatTime(_duration),
-            style: const TextStyle(
-                color: Colors.white,
-                fontFamily: 'Nunito',
-                fontWeight: FontWeight.bold,
-                fontSize: 16),
-          ),
-        ],
-      ),)
-
-      
-    ]
-    );
-  }
-
-  Column _songdatasection() {
-    return Column(
-      children: [
-        Text(
-          song,
-          style: const TextStyle(
-              color: Colors.white,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.bold,
-              fontSize: 30),
-        ),
-        Text(
-          singer,
-          style: const TextStyle(
-              color: Colors.grey,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.bold,
-              fontSize: 18),
-        ),
-      ],
     );
   }
 
   AnimatedBuilder _photosection() {
     return AnimatedBuilder(
       animation: _controller,
-      builder: (context, child) {
+      builder: (_, child) {
         return Transform.rotate(
-          angle: _controller.value * 2 * 3.1416, // Rotates 360 degrees
+          angle: _controller.value * 2 * 3.1416,
           child: Container(
             width: 200,
             height: 200,
             decoration: BoxDecoration(
-              shape: BoxShape.circle, // Makes it round
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  spreadRadius: 7,
-                  blurRadius: 10,
-                  offset: const Offset(4, 4),
-                ),
-              ],
-              image: DecorationImage(
-                image: AssetImage(imagepath),
-                fit: BoxFit.cover,
-              ),
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), spreadRadius: 7, blurRadius: 10)],
+              image: DecorationImage(image: AssetImage(imagepath), fit: BoxFit.cover),
             ),
           ),
         );
@@ -423,38 +310,66 @@ return Column(
     );
   }
 
-  Padding _appheader() {
+  Column _songdatasection() {
+    return Column(
+      children: [
+        Text(song, style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
+        Text(singer, style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Column _progresssection() {
+    return Column(
+      children: [
+        SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 4,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+            activeTrackColor: const Color(0xff796EF8),
+            inactiveTrackColor: Colors.white,
+            thumbColor: const Color(0xff796EF8),
+          ),
+          child: Slider(
+            min: 0,
+            max: _duration.inMilliseconds.toDouble(),
+            value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
+            onChanged: (value) => setState(() {
+              _position = Duration(milliseconds: value.toInt());
+            }),
+            onChangeEnd: (value) {
+              _player.seek(Duration(milliseconds: value.toInt()));
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(formatTime(_position), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(formatTime(_duration), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Padding _controlsection() {
     return Padding(
-      padding: const EdgeInsets.only(left: 12, right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          IconButton(onPressed: playPrevious, icon: const Icon(Icons.skip_previous_outlined, size: 60, color: Colors.white)),
           IconButton(
-            onPressed: () {}, // Back button functionality
-            icon: const Icon(
-              Icons.arrow_back,
-              color: Colors.white,
-              size: 30,
-            ),
+            onPressed: togglePlayPause,
+            icon: Icon(isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded, size: 100, color: const Color(0xff796EF8)),
           ),
-          Text(
-            "$song by $singer",
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontFamily: 'Nunito',
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          GestureDetector(
-            onTap: toggleLike, // Short tap toggles like
-            onLongPress: goToFavorites, // Long press navigates to FavoritePage
-            child: Icon(
-              isLiked ? Icons.favorite : Icons.favorite_border,
-              color: isLiked ? Colors.red : Colors.white,
-              size: 30,
-            ),
-          ),
+          IconButton(onPressed: playNext, icon: const Icon(Icons.skip_next_outlined, size: 60, color: Colors.white)),
+          IconButton(onPressed: pickAudioFile, icon: const Icon(Icons.upload_file, color: Colors.white)),
         ],
       ),
     );
