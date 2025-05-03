@@ -10,8 +10,9 @@ import 'package:path/path.dart' as p;
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file/file.dart';
+import 'package:file/local.dart';
 
-//import 'package:marquee/marquee.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -20,7 +21,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  final List<Song> songs = songList;
+  List<Song> songs = [];
   List<Song> likedsongs = [];
 
   int index = 0;
@@ -29,13 +30,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool hiddenData = true;
   int clickedTimes = 0;
 
-  String singer = songList[0].singer;
-  String song = songList[0].name;
-  String audiopath = songList[0].audioPath;
-  String imagepath = songList[0].imagePath;
-  String lyrics = songList[0].lyrics;
+  String singer = "Unknown Artist";
+  String song = "No song selected";
+  String audiopath = "";
+  String imagepath = "assets/images/Music_logo.jpg";
+  String lyrics = "";
 
-  bool isLocalFile = false;
+  bool isLocalFile = true;
   String localPath = "";
 
   late AnimationController _controller;
@@ -44,6 +45,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Duration _position = Duration.zero;
 
   Helper db = Helper();
+  final FileSystem _fileSystem = const LocalFileSystem();
 
   StreamSubscription? _accelerometerSubscription;
   DateTime _lastShakeTime = DateTime.now();
@@ -97,21 +99,72 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     }
   }
 
-void _startListeningToShake() {
-  _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
-    double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-    if (acceleration > shakeThreshold) {
-      DateTime now = DateTime.now();
-      if (now.difference(_lastShakeTime).inMilliseconds > 2000) {
-        _lastShakeTime = now;
-        togglePlayPause();
+  void _startListeningToShake() {
+    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
+      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
+      if (acceleration > shakeThreshold) {
+        DateTime now = DateTime.now();
+        if (now.difference(_lastShakeTime).inMilliseconds > 2000) {
+          _lastShakeTime = now;
+          togglePlayPause();
+        }
       }
-    }
-  });
-}
+    });
+  }
 
   Future<void> _requestPermission() async {
-    await Permission.storage.request();
+    var status = await Permission.storage.status;
+    if (!status.isGranted) {
+      status = await Permission.storage.request();
+    }
+    
+    if (status.isGranted) {
+      await _scanDeviceForAudioFiles();
+    } else {
+      // Handle case where permission is denied
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Storage permission is required to access audio files"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  Future<void> _scanDeviceForAudioFiles() async {
+    try {
+      // This is a simplified approach - in a real app you'd want to properly scan directories
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: true,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          songs = result.files.map((file) => Song(
+            name: p.basenameWithoutExtension(file.name),
+            singer: "Unknown Artist",
+            imagePath: "assets/images/Music_logo.jpg",
+            audioPath: file.path!,
+            lyrics: "",
+          )).toList();
+
+          if (songs.isNotEmpty) {
+            index = 0;
+            localPath = songs[0].audioPath;
+            song = songs[0].name;
+            isLocalFile = true;
+          }
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Error scanning files: $e"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> _loadFavorites() async {
@@ -141,26 +194,18 @@ void _startListeningToShake() {
   }
 
   void togglePlayPause() {
+    if (songs.isEmpty) return;
+    
     if (isPlaying) {
       _pauseMusic();
     } else {
-      if (isLocalFile) {
-        _player.play(DeviceFileSource(localPath)).then((_) {
-          setState(() {
-            isPlaying = true;
-            hiddenData = false;
-            clickedTimes++;
-          });
+      _player.play(DeviceFileSource(localPath)).then((_) {
+        setState(() {
+          isPlaying = true;
+          hiddenData = false;
+          clickedTimes++;
         });
-      } else {
-        _player.play(AssetSource(audiopath)).then((_) {
-          setState(() {
-            isPlaying = true;
-            hiddenData = false;
-            clickedTimes++;
-          });
-        });
-      }
+      });
     }
   }
 
@@ -171,74 +216,55 @@ void _startListeningToShake() {
   }
 
   Future<void> _resumeMusic() async {
-    if (isLocalFile) {
-      await _player.play(DeviceFileSource(localPath), position: _position);
-    } else {
-      await _player.play(AssetSource(audiopath), position: _position);
-    }
+    if (songs.isEmpty) return;
+    
+    await _player.play(DeviceFileSource(localPath), position: _position);
     setState(() => isPlaying = true);
   }
 
   void playNext() {
-    if (index < songs.length - 1) {
-      index++;
-      updateSongDetails();
-      _player.play(AssetSource(audiopath));
-    }
-  }
-
-  void playPrevious() {
-    if (index > 0) {
-      index--;
-      updateSongDetails();
-      _player.play(AssetSource(audiopath));
-    }
-  }
-
-  void updateSongDetails() {
-    final current = songs[index];
+    if (songs.isEmpty || index >= songs.length - 1) return;
+    
     setState(() {
-      singer = current.singer;
-      song = current.name;
-      audiopath = current.audioPath;
-      imagepath = current.imagePath;
-      lyrics = current.lyrics;
-      isLocalFile = false;
+      index++;
+      localPath = songs[index].audioPath;
+      song = songs[index].name;
       isPlaying = true;
       isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
     });
+    
+    _player.play(DeviceFileSource(localPath));
   }
-void pickAudioFile() async {
-  final result = await FilePicker.platform.pickFiles(type: FileType.audio);
-  if (result != null && result.files.single.path != null) {
-    localPath = result.files.single.path!;
-    isLocalFile = true;
 
-    await _player.setSource(DeviceFileSource(localPath));
-    _player.getDuration().then((d) {
-      final filename = p.basenameWithoutExtension(localPath); // Extract filename without extension
-
-      setState(() {
-        _duration = d ?? Duration.zero;
-        song = filename; // Use filename as song title
-        singer = "Local Artist";
-        imagepath = "assets/images/Music_logo.jpg";
-      });
-
-      togglePlayPause(); // Play the uploaded song
+  void playPrevious() {
+    if (songs.isEmpty || index <= 0) return;
+    
+    setState(() {
+      index--;
+      localPath = songs[index].audioPath;
+      song = songs[index].name;
+      isPlaying = true;
+      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
     });
+    
+    _player.play(DeviceFileSource(localPath));
   }
-}
-
 
   void toggleLike() async {
+    if (songs.isEmpty) return;
+    
     setState(() {
       isLiked = !isLiked;
-      songs[index].isFavorite = isLiked;
     });
 
     if (isLiked) {
-      await db.insertsong(songs[index]);
+      await db.insertsong(Song(
+        name: song,
+        singer: singer,
+        imagePath: imagepath,
+        audioPath: localPath,
+        lyrics: lyrics,
+      ));
     } else {
       await db.deletesongByNameAndSinger(song, singer);
     }
@@ -288,6 +314,23 @@ void pickAudioFile() async {
             const SizedBox(height: 40),
             _controlsection(),
             const SizedBox(height: 40),
+            if (songs.isEmpty) 
+              Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    const Text(
+                      "No songs found",
+                      style: TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton(
+                      onPressed: _scanDeviceForAudioFiles,
+                      child: const Text("Scan for audio files"),
+                    ),
+                  ],
+                ),
+              ),
           ],
         ),
       ),
@@ -301,11 +344,17 @@ void pickAudioFile() async {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(onPressed: () {}, icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30)),
-          Text("$song by $singer", style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text("$song by $singer", 
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1),
           GestureDetector(
-            onTap: toggleLike,
+            onTap: songs.isNotEmpty ? toggleLike : null,
             onLongPress: goToFavorites,
-            child: Icon(isLiked ? Icons.favorite : Icons.favorite_border, color: isLiked ? Colors.red : Colors.white, size: 30),
+            child: Icon(
+              isLiked ? Icons.favorite : Icons.favorite_border, 
+              color: songs.isEmpty ? Colors.grey : (isLiked ? Colors.red : Colors.white), 
+              size: 30),
           ),
         ],
       ),
@@ -317,7 +366,7 @@ void pickAudioFile() async {
       animation: _controller,
       builder: (_, child) {
         return Transform.rotate(
-          angle: _controller.value * 2 * 3.1416,
+          angle: isPlaying ? _controller.value * 2 * 3.1416 : 0,
           child: Container(
             width: 200,
             height: 200,
@@ -335,8 +384,14 @@ void pickAudioFile() async {
   Column _songdatasection() {
     return Column(
       children: [
-        Text(song, style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold)),
-        Text(singer, style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(song, 
+            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
+        Text(singer, 
+            style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1),
       ],
     );
   }
@@ -385,13 +440,25 @@ void pickAudioFile() async {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          IconButton(onPressed: playPrevious, icon: const Icon(Icons.skip_previous_outlined, size: 60, color: Colors.white)),
           IconButton(
-            onPressed: togglePlayPause,
-            icon: Icon(isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded, size: 100, color: const Color(0xff796EF8)),
+            onPressed: songs.isNotEmpty ? playPrevious : null,
+            icon: Icon(Icons.skip_previous_outlined, size: 60, color: songs.isNotEmpty ? Colors.white : Colors.grey),
           ),
-          IconButton(onPressed: playNext, icon: const Icon(Icons.skip_next_outlined, size: 60, color: Colors.white)),
-          IconButton(onPressed: pickAudioFile, icon: const Icon(Icons.upload_file, color: Colors.white)),
+          IconButton(
+            onPressed: songs.isNotEmpty ? togglePlayPause : null,
+            icon: Icon(
+              isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded, 
+              size: 100, 
+              color: songs.isNotEmpty ? const Color(0xff796EF8) : Colors.grey),
+          ),
+          IconButton(
+            onPressed: songs.isNotEmpty ? playNext : null,
+            icon: Icon(Icons.skip_next_outlined, size: 60, color: songs.isNotEmpty ? Colors.white : Colors.grey),
+          ),
+          IconButton(
+            onPressed: _scanDeviceForAudioFiles,
+            icon: const Icon(Icons.refresh, color: Colors.white),
+          ),
         ],
       ),
     );
