@@ -70,8 +70,8 @@ class MainActivity: FlutterActivity() {
     }
 
     inner class ShakeDetector(private val onShake: () -> Unit) : SensorEventListener {
-        private val shakeThreshold = 25f
-        private val minTimeBetweenShakes = 2000L // 2 seconds
+        private val shakeThreshold = 15f
+        private val minTimeBetweenShakes = 1000L // 2 seconds
         private var lastShakeTime = 0L
         private var lastX = 0f
         private var lastY = 0f
