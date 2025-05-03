@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path/path.dart' as p;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,6 +42,10 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   bool _isLoading = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  
+  static const platform = MethodChannel('com.example.blankproject/shake');
+  late StreamSubscription<void> _shakeSubscription;
+  DateTime? _lastShakeTime;
 
   @override
   void initState() {
@@ -51,6 +56,41 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
     _initPlayer();
     _checkPermissions();
+    _initShakeDetection();
+  }
+
+  void _initShakeDetection() {
+    _shakeSubscription = EventChannel('com.example.blankproject/shake_event')
+        .receiveBroadcastStream()
+        .listen((_) => _handleShake());
+    
+    // Start native shake detection
+    platform.invokeMethod('startShakeDetection');
+  }
+
+  void _handleShake() {
+    final now = DateTime.now();
+    if (_lastShakeTime == null || 
+        now.difference(_lastShakeTime!) > const Duration(seconds: 2)) {
+      _lastShakeTime = now;
+      _togglePlayPause();
+      
+      // Visual feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_isPlaying ? 'Paused by shake' : 'Playing by shake'),
+          duration: const Duration(milliseconds: 500),
+        ),
+      );
+    }
+  }
+
+  void _togglePlayPause() {
+    if (_isPlaying) {
+      _pauseMusic();
+    } else if (_songs.isNotEmpty) {
+      _playMusic();
+    }
   }
 
   Future<void> _initPlayer() async {
@@ -97,10 +137,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     try {
       setState(() => _isLoading = true);
       
-      // List of directories to scan for music files
       List<Directory> directoriesToScan = [
-        Directory('/storage/emulated/0/Music'),
         Directory('/storage/emulated/0/Download'),
+        Directory('/storage/emulated/0/Music'),
         Directory('/storage/emulated/0/Documents'),
         Directory('/storage/emulated/0/Media'),
         Directory('/storage/emulated/0/Android/media'),
@@ -108,7 +147,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
       List<File> audioFiles = [];
       
-      // Scan each directory
       for (var dir in directoriesToScan) {
         if (await dir.exists()) {
           try {
@@ -123,7 +161,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         }
       }
 
-      // Remove duplicates (files that might exist in multiple locations)
       audioFiles = audioFiles.toSet().toList();
 
       setState(() {
@@ -152,6 +189,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     if (_songs.isEmpty) return;
     
     try {
+      await _player.setReleaseMode(ReleaseMode.stop);
       await _player.play(DeviceFileSource(_songs[_currentIndex].path));
       setState(() {
         _isPlaying = true;
@@ -159,9 +197,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       });
     } catch (e) {
       debugPrint("Play error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Playback error: ${e.toString()}")),
-      );
     }
   }
 
@@ -228,6 +263,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
+    platform.invokeMethod('stopShakeDetection');
+    _shakeSubscription.cancel();
     _player.dispose();
     _controller.dispose();
     super.dispose();
