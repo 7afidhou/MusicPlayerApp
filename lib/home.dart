@@ -1,466 +1,379 @@
 import 'dart:async';
-import 'favorite.dart';
-import 'song.dart';
-import 'db.dart';
+import 'dart:io';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
-import 'package:sensors_plus/sensors_plus.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:file/file.dart';
-import 'package:file/local.dart';
+
+void main() {
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Music Player',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(),
+      home: const HomePage(),
+    );
+  }
+}
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin, WidgetsBindingObserver {
-  List<Song> songs = [];
-  List<Song> likedsongs = [];
-
-  int index = 0;
-  bool isPlaying = false;
-  bool isLiked = false;
-  bool hiddenData = true;
-  int clickedTimes = 0;
-
-  String singer = "Unknown Artist";
-  String song = "No song selected";
-  String audiopath = "";
-  String imagepath = "assets/images/Music_logo.jpg";
-  String lyrics = "";
-
-  bool isLocalFile = true;
-  String localPath = "";
-
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   final AudioPlayer _player = AudioPlayer();
+  List<File> _songs = [];
+  int _currentIndex = 0;
+  bool _isPlaying = false;
+  bool _permissionGranted = false;
+  bool _isLoading = false;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
-
-  Helper db = Helper();
-  final FileSystem _fileSystem = const LocalFileSystem();
-
-  StreamSubscription? _accelerometerSubscription;
-  DateTime _lastShakeTime = DateTime.now();
-  final double shakeThreshold = 15.0;
 
   @override
   void initState() {
     super.initState();
-    _requestPermission();
-    _loadFavorites();
-    _loadLastPosition();
-    _startListeningToShake();
-    _controller = AnimationController(vsync: this, duration: const Duration(seconds: 20))..repeat();
-    WidgetsBinding.instance.addObserver(this);
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    );
+    _initPlayer();
+    _checkPermissions();
+  }
 
-    _player.onDurationChanged.listen((newDuration) {
-      setState(() {
-        _duration = newDuration;
-      });
-    });
-
-    _player.onPositionChanged.listen((newPosition) {
-      setState(() {
-        _position = newPosition;
-      });
-    });
-
+  Future<void> _initPlayer() async {
+    _player.onDurationChanged.listen((d) => setState(() => _duration = d));
+    _player.onPositionChanged.listen((p) => setState(() => _position = p));
     _player.onPlayerComplete.listen((_) {
-      setState(() {
-        isPlaying = false;
-        _position = Duration.zero;
-      });
+      setState(() => _isPlaying = false);
+      _playNext();
     });
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _controller.dispose();
-    _player.dispose();
-    _accelerometerSubscription?.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) {
-      _pauseMusic();
-    } else if (state == AppLifecycleState.resumed) {
-      _resumeMusic();
-    }
-  }
-
-  void _startListeningToShake() {
-    _accelerometerSubscription = accelerometerEvents.listen((AccelerometerEvent event) {
-      double acceleration = sqrt(event.x * event.x + event.y * event.y + event.z * event.z);
-      if (acceleration > shakeThreshold) {
-        DateTime now = DateTime.now();
-        if (now.difference(_lastShakeTime).inMilliseconds > 2000) {
-          _lastShakeTime = now;
-          togglePlayPause();
-        }
-      }
-    });
-  }
-
-  Future<void> _requestPermission() async {
-    var status = await Permission.storage.status;
-    if (!status.isGranted) {
-      status = await Permission.storage.request();
+  Future<void> _checkPermissions() async {
+    setState(() => _isLoading = true);
+    
+    if (await Permission.audio.isGranted || 
+        await Permission.audio.request().isGranted) {
+      await _handlePermissionGranted();
+      return;
     }
     
-    if (status.isGranted) {
-      await _scanDeviceForAudioFiles();
-    } else {
-      // Handle case where permission is denied
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Storage permission is required to access audio files"),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (await Permission.storage.isGranted || 
+        await Permission.storage.request().isGranted) {
+      await _handlePermissionGranted();
+      return;
     }
+
+    setState(() => _isLoading = false);
+    
+    if (await Permission.storage.isPermanentlyDenied || 
+        await Permission.audio.isPermanentlyDenied) {
+      await _showPermissionDeniedDialog();
+    }
+  }
+
+  Future<void> _handlePermissionGranted() async {
+    setState(() {
+      _permissionGranted = true;
+      _isLoading = false;
+    });
+    await _scanDeviceForAudioFiles();
   }
 
   Future<void> _scanDeviceForAudioFiles() async {
     try {
-      // This is a simplified approach - in a real app you'd want to properly scan directories
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.audio,
-        allowMultiple: true,
-      );
+      setState(() => _isLoading = true);
+      
+      // List of directories to scan for music files
+      List<Directory> directoriesToScan = [
+        Directory('/storage/emulated/0/Music'),
+        Directory('/storage/emulated/0/Download'),
+        Directory('/storage/emulated/0/Documents'),
+        Directory('/storage/emulated/0/Media'),
+        Directory('/storage/emulated/0/Android/media'),
+      ];
 
-      if (result != null && result.files.isNotEmpty) {
-        setState(() {
-          songs = result.files.map((file) => Song(
-            name: p.basenameWithoutExtension(file.name),
-            singer: "Unknown Artist",
-            imagePath: "assets/images/Music_logo.jpg",
-            audioPath: file.path!,
-            lyrics: "",
-          )).toList();
-
-          if (songs.isNotEmpty) {
-            index = 0;
-            localPath = songs[0].audioPath;
-            song = songs[0].name;
-            isLocalFile = true;
+      List<File> audioFiles = [];
+      
+      // Scan each directory
+      for (var dir in directoriesToScan) {
+        if (await dir.exists()) {
+          try {
+            await for (var entity in dir.list(recursive: true)) {
+              if (entity is File && _isAudioFile(entity.path)) {
+                audioFiles.add(entity);
+              }
+            }
+          } catch (e) {
+            debugPrint("Error scanning ${dir.path}: $e");
           }
-        });
+        }
       }
+
+      // Remove duplicates (files that might exist in multiple locations)
+      audioFiles = audioFiles.toSet().toList();
+
+      setState(() {
+        _songs = audioFiles;
+        if (_songs.isNotEmpty) {
+          _currentIndex = 0;
+          _playMusic();
+        }
+      });
     } catch (e) {
+      debugPrint("Error scanning files: $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Error scanning files: $e"),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text("Error scanning music: ${e.toString()}")),
       );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _loadFavorites() async {
-    List<Map> songsfetched = await db.readsongs();
-    setState(() {
-      likedsongs = songsfetched.map((song) => Song(
-        name: song['name'],
-        singer: song['singer'],
-        imagePath: song['imagePath'],
-        audioPath: song['audioPath'],
-        lyrics: song['lyrics'],
-      )).toList();
-
-      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
-    });
+  bool _isAudioFile(String path) {
+    final ext = p.extension(path).toLowerCase();
+    return ['.mp3', '.wav', '.aac', '.ogg', '.m4a', '.flac', '.opus'].contains(ext);
   }
 
-  Future<void> _loadLastPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    int lastPosition = prefs.getInt('last_position') ?? 0;
-    _position = Duration(milliseconds: lastPosition);
-  }
-
-  Future<void> _saveLastPosition() async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setInt('last_position', _position.inMilliseconds);
-  }
-
-  void togglePlayPause() {
-    if (songs.isEmpty) return;
+  Future<void> _playMusic() async {
+    if (_songs.isEmpty) return;
     
-    if (isPlaying) {
-      _pauseMusic();
-    } else {
-      _player.play(DeviceFileSource(localPath)).then((_) {
-        setState(() {
-          isPlaying = true;
-          hiddenData = false;
-          clickedTimes++;
-        });
+    try {
+      await _player.play(DeviceFileSource(_songs[_currentIndex].path));
+      setState(() {
+        _isPlaying = true;
+        _controller.repeat();
       });
+    } catch (e) {
+      debugPrint("Play error: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Playback error: ${e.toString()}")),
+      );
     }
   }
 
   Future<void> _pauseMusic() async {
-    await _saveLastPosition();
-    await _player.pause();
-    setState(() => isPlaying = false);
-  }
-
-  Future<void> _resumeMusic() async {
-    if (songs.isEmpty) return;
-    
-    await _player.play(DeviceFileSource(localPath), position: _position);
-    setState(() => isPlaying = true);
-  }
-
-  void playNext() {
-    if (songs.isEmpty || index >= songs.length - 1) return;
-    
-    setState(() {
-      index++;
-      localPath = songs[index].audioPath;
-      song = songs[index].name;
-      isPlaying = true;
-      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
-    });
-    
-    _player.play(DeviceFileSource(localPath));
-  }
-
-  void playPrevious() {
-    if (songs.isEmpty || index <= 0) return;
-    
-    setState(() {
-      index--;
-      localPath = songs[index].audioPath;
-      song = songs[index].name;
-      isPlaying = true;
-      isLiked = likedsongs.any((s) => s.name == song && s.singer == singer);
-    });
-    
-    _player.play(DeviceFileSource(localPath));
-  }
-
-  void toggleLike() async {
-    if (songs.isEmpty) return;
-    
-    setState(() {
-      isLiked = !isLiked;
-    });
-
-    if (isLiked) {
-      await db.insertsong(Song(
-        name: song,
-        singer: singer,
-        imagePath: imagepath,
-        audioPath: localPath,
-        lyrics: lyrics,
-      ));
-    } else {
-      await db.deletesongByNameAndSinger(song, singer);
+    try {
+      await _player.pause();
+      setState(() {
+        _isPlaying = false;
+        _controller.stop();
+      });
+    } catch (e) {
+      debugPrint("Pause error: $e");
     }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          isLiked ? "Added to Liked Songs" : "Removed from Liked Songs",
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: isLiked ? Colors.green : Colors.red,
-        behavior: SnackBarBehavior.floating,
-        elevation: 6,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        duration: const Duration(seconds: 1),
-      ),
-    );
   }
 
-  void goToFavorites() {
-    _pauseMusic();
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritePage())).then((_) {
-      _resumeMusic();
-    });
+  void _playNext() {
+    if (_songs.isEmpty || _currentIndex >= _songs.length - 1) return;
+    
+    setState(() => _currentIndex++);
+    _playMusic();
   }
 
-  String formatTime(Duration duration) {
+  void _playPrevious() {
+    if (_songs.isEmpty || _currentIndex <= 0) return;
+    
+    setState(() => _currentIndex--);
+    _playMusic();
+  }
+
+  String _getSongName(File file) => p.basenameWithoutExtension(file.path);
+
+  String _formatTime(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, '0');
-    return "${twoDigits(duration.inMinutes.remainder(60))}:${twoDigits(duration.inSeconds.remainder(60))}";
+    return "${twoDigits(duration.inMinutes)}:${twoDigits(duration.inSeconds.remainder(60))}";
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF181787),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 40),
-            _appheader(),
-            const SizedBox(height: 45),
-            _photosection(),
-            const SizedBox(height: 20),
-            _songdatasection(),
-            const SizedBox(height: 40),
-            _progresssection(),
-            const SizedBox(height: 40),
-            _controlsection(),
-            const SizedBox(height: 40),
-            if (songs.isEmpty) 
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    const Text(
-                      "No songs found",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton(
-                      onPressed: _scanDeviceForAudioFiles,
-                      child: const Text("Scan for audio files"),
-                    ),
-                  ],
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Padding _appheader() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(onPressed: () {}, icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30)),
-          Text("$song by $singer", 
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1),
-          GestureDetector(
-            onTap: songs.isNotEmpty ? toggleLike : null,
-            onLongPress: goToFavorites,
-            child: Icon(
-              isLiked ? Icons.favorite : Icons.favorite_border, 
-              color: songs.isEmpty ? Colors.grey : (isLiked ? Colors.red : Colors.white), 
-              size: 30),
-          ),
-        ],
-      ),
-    );
-  }
-
-  AnimatedBuilder _photosection() {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (_, child) {
-        return Transform.rotate(
-          angle: isPlaying ? _controller.value * 2 * 3.1416 : 0,
-          child: Container(
-            width: 200,
-            height: 200,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), spreadRadius: 7, blurRadius: 10)],
-              image: DecorationImage(image: AssetImage(imagepath), fit: BoxFit.cover),
+  Future<void> _showPermissionDeniedDialog() async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Permission Required'),
+          content: const Text(
+              'Music Player needs access to your audio files to play music. '
+              'Please enable storage permissions in app settings.'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () => Navigator.of(context).pop(),
             ),
-          ),
+            TextButton(
+              child: const Text('Open Settings'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+            ),
+          ],
         );
       },
     );
   }
 
-  Column _songdatasection() {
-    return Column(
-      children: [
-        Text(song, 
-            style: const TextStyle(color: Colors.white, fontSize: 30, fontWeight: FontWeight.bold),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1),
-        Text(singer, 
-            style: const TextStyle(color: Colors.grey, fontSize: 18, fontWeight: FontWeight.bold),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1),
-      ],
+  @override
+  void dispose() {
+    _player.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Music Player'),
+        actions: [
+          if (_permissionGranted)
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: _scanDeviceForAudioFiles,
+            ),
+        ],
+      ),
+      body: Center(
+        child: _isLoading
+            ? const CircularProgressIndicator()
+            : !_permissionGranted
+                ? _buildPermissionView()
+                : _songs.isEmpty
+                    ? _buildEmptyView()
+                    : _buildPlayerView(),
+      ),
     );
   }
 
-  Column _progresssection() {
-    return Column(
-      children: [
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(
-            trackHeight: 4,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            activeTrackColor: const Color(0xff796EF8),
-            inactiveTrackColor: Colors.white,
-            thumbColor: const Color(0xff796EF8),
-          ),
-          child: Slider(
-            min: 0,
-            max: _duration.inMilliseconds.toDouble(),
-            value: _position.inMilliseconds.clamp(0, _duration.inMilliseconds).toDouble(),
-            onChanged: (value) => setState(() {
-              _position = Duration(milliseconds: value.toInt());
-            }),
-            onChangeEnd: (value) {
-              _player.seek(Duration(milliseconds: value.toInt()));
-            },
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(formatTime(_position), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-              Text(formatTime(_duration), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Padding _controlsection() {
+  Widget _buildPermissionView() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          IconButton(
-            onPressed: songs.isNotEmpty ? playPrevious : null,
-            icon: Icon(Icons.skip_previous_outlined, size: 60, color: songs.isNotEmpty ? Colors.white : Colors.grey),
+          const Text(
+            "Music Player needs access to your audio files",
+            style: TextStyle(fontSize: 20),
+            textAlign: TextAlign.center,
           ),
-          IconButton(
-            onPressed: songs.isNotEmpty ? togglePlayPause : null,
-            icon: Icon(
-              isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded, 
-              size: 100, 
-              color: songs.isNotEmpty ? const Color(0xff796EF8) : Colors.grey),
+          const SizedBox(height: 30),
+          ElevatedButton(
+            onPressed: _checkPermissions,
+            style: ElevatedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            ),
+            child: const Text("GRANT PERMISSION"),
           ),
-          IconButton(
-            onPressed: songs.isNotEmpty ? playNext : null,
-            icon: Icon(Icons.skip_next_outlined, size: 60, color: songs.isNotEmpty ? Colors.white : Colors.grey),
-          ),
-          IconButton(
-            onPressed: _scanDeviceForAudioFiles,
-            icon: const Icon(Icons.refresh, color: Colors.white),
+          const SizedBox(height: 15),
+          TextButton(
+            onPressed: openAppSettings,
+            child: const Text("Open Settings Manually"),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildEmptyView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("No songs found"),
+        const SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: _scanDeviceForAudioFiles,
+          child: const Text("Scan Again"),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayerView() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (_, child) {
+            return Transform.rotate(
+              angle: _isPlaying ? _controller.value * 2 * pi : 0,
+              child: Container(
+                width: 200,
+                height: 200,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: DecorationImage(
+                    image: AssetImage("assets/images/Music_logo.jpg"),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 30),
+        Text(
+          _getSongName(_songs[_currentIndex]),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          "${_currentIndex + 1}/${_songs.length}",
+          style: const TextStyle(fontSize: 16),
+        ),
+        const SizedBox(height: 40),
+        Slider(
+          min: 0,
+          max: _duration.inSeconds.toDouble(),
+          value: _position.inSeconds.clamp(0, _duration.inSeconds).toDouble(),
+          onChanged: (value) {
+            _player.seek(Duration(seconds: value.toInt()));
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(_formatTime(_position)),
+              Text(_formatTime(_duration)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 30),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.skip_previous, size: 40),
+              onPressed: _playPrevious,
+            ),
+            IconButton(
+              icon: Icon(
+                _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_filled,
+                size: 60,
+              ),
+              onPressed: _isPlaying ? _pauseMusic : _playMusic,
+            ),
+            IconButton(
+              icon: const Icon(Icons.skip_next, size: 40),
+              onPressed: _playNext,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
